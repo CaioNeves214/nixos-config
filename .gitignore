@@ -1,0 +1,13 @@
+# editor
+.vscode/
+.idea/
+
+# system
+result
+
+# direnv
+.direnv/
+.envrc
+
+# macOS
+.DS_Store

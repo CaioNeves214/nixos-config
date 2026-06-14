@@ -1,0 +1,86 @@
+{
+    "layer": "top",
+    "position": "top",
+    "height": 36,
+    "spacing": 8,
+
+    "modules-left": [
+        "hyprland/workspaces",
+        "network"
+    ],
+
+    "modules-center": [
+        "clock"
+    ],
+
+    "modules-right": [
+        "temperature",
+        "cpu",
+        "memory",
+        "battery"
+    ],
+
+    "hyprland/workspaces": {
+        "format": "{name}"
+    },
+
+    "network": {
+        "format-wifi": "󰖩 {signalStrength}%",
+        "format-ethernet": "󰈀 Ethernet",
+        "format-disconnected": "󰖪 Offline",
+        "tooltip-format": "Rede: {essid}\nIP: {ipaddr}\nSinal: {signalStrength}%"
+    },
+
+    "clock": {
+        "format": " {:%H:%M}",
+        "tooltip-format": "<big>{:%A}</big>\n{:%d/%m/%Y}\nSemana %V"
+    },
+
+    "temperature": {
+        "critical-threshold": 85,
+        "format": "{icon} {temperatureC}°C",
+        "format-icons": [
+            "",
+            "",
+            "",
+            "",
+            ""
+        ],
+        "tooltip": true
+    },
+
+    "cpu": {
+        "format": "󰍛 {usage}%",
+        "tooltip": true,
+        "tooltip-format": "Uso total: {usage}%"
+    },
+
+    "memory": {
+        "format": "󰘚 {}%",
+        "tooltip": true,
+        "tooltip-format": "RAM usada: {used:0.1f} GB\nRAM total: {total:0.1f} GB"
+    },
+
+    "battery": {
+        "states": {
+            "warning": 30,
+            "critical": 15
+        },
+        "format": "{icon} {capacity}%",
+        "format-charging": "󰂄 {capacity}%",
+        "format-plugged": "󰂄 {capacity}%",
+        "format-icons": [
+            "󰁺",
+            "󰁻",
+            "󰁼",
+            "󰁽",
+            "󰁾",
+            "󰁿",
+            "󰂀",
+            "󰂁",
+            "󰂂",
+            "󰁹"
+        ],
+        "tooltip-format": "Carga: {capacity}%\nTempo restante: {time}"
+    }
+}
