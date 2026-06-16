@@ -10,5 +10,6 @@
      hyprpaper # Wallpaper 
      xfce.thunar # File Explorer
      mako # ? (find out)
+     discord # voice channel
    ];
  }
