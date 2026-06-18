@@ -27,8 +27,8 @@ Todas as ferramentas de desenvolvimento necessárias para o dia a dia estão ver
 ```text
 ├── dotfiles                       # Configurações declarativas de escopo do usuário (Dotfiles e Aplicações)
 ├── hosts/macbookpro2012           # Diferentes hosts no sistema e suas configurações individuais
-    ├── configuration.nix          # Configuração centralizada a nível de sistema (Root)
-    └── hardware-configuration.nix # Mapeamento físico e drivers gerados via hardware scan
+|   ├── configuration.nix          # Configuração centralizada a nível de sistema (Root)
+|   └── hardware-configuration.nix # Mapeamento físico e drivers gerados via hardware scan
 └── modules/                       # Configurações modulares e isoladas do ambiente
     ├── system/                    # Módulos do sistema (Drivers, NetworkManager, Serviços de Background)
     └── home/                      # Configurações para o rebuild correto do sistemas atraves de imports
