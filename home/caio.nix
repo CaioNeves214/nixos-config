@@ -13,7 +13,7 @@
 
     ../modules/home/git.nix
     ../modules/home/packages.nix
-
+    ../modules/home/dev.nix
     ../modules/home/hyprland.nix
     ../modules/home/waybar.nix
   ];
