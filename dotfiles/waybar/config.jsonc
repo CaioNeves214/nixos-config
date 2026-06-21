@@ -1,12 +1,15 @@
 {
     "layer": "top",
     "position": "top",
-    "height": 36,
-    "spacing": 8,
+    "height": 42,
+    "margin-top": 8,
+    "margin-left": 12,
+    "margin-right": 12,
+    "spacing": 0,
 
     "modules-left": [
         "hyprland/workspaces",
-        "network"
+        "hyprland/window"
     ],
 
     "modules-center": [
@@ -14,6 +17,10 @@
     ],
 
     "modules-right": [
+        "tray",
+        "backlight",
+        "pulseaudio",
+        "network",
         "temperature",
         "cpu",
         "memory",
@@ -21,66 +28,127 @@
     ],
 
     "hyprland/workspaces": {
-        "format": "{name}"
+        "format": "{icon}",
+        "format-icons": {
+            "1": "1",
+            "2": "2",
+            "3": "3",
+            "4": "4",
+            "5": "5",
+            "active": "",
+            "default": ""
+        },
+        "on-click": "activate",
+        "sort-by-number": true,
+        "all-outputs": false
+    },
+
+    "hyprland/window": {
+        "format": " {}",
+        "max-length": 40,
+        "separate-outputs": true,
+        "rewrite": {
+            "(.*) — Mozilla Firefox": "󰈹 $1",
+            "(.*) - Brave": "󰈹 $1",
+            "(.*)kitty": "󰄛 Terminal"
+        }
+    },
+
+    "clock": {
+        "format": "󰥔 {:%H:%M}",
+        "format-alt": "󰃭 {:%d/%m/%Y}",
+        "tooltip-format": "<tt><small>{calendar}</small></tt>",
+        "calendar": {
+            "mode": "month",
+            "weeks-pos": "right",
+            "on-scroll": 1,
+            "format": {
+                "months":   "<span color='#cba6f7'><b>{}</b></span>",
+                "days":     "<span color='#cdd6f4'>{}</span>",
+                "weeks":    "<span color='#6c7086'><b>S{}</b></span>",
+                "weekdays": "<span color='#89b4fa'><b>{}</b></span>",
+                "today":    "<span color='#f38ba8'><b><u>{}</u></b></span>"
+            }
+        },
+        "actions": {
+            "on-click-right": "mode",
+            "on-scroll-up": "shift_up",
+            "on-scroll-down": "shift_down"
+        },
+        "on-click": "gsimplecal"
+    },
+
+    "tray": {
+        "icon-size": 16,
+        "spacing": 6,
+        "show-passive-items": true
+    },
+
+    "backlight": {
+        "format": "{icon} {percent}%",
+        "format-icons": ["󰃞", "󰃟", "󰃠"],
+        "on-scroll-up": "brightnessctl set 5%+",
+        "on-scroll-down": "brightnessctl set 5%-",
+        "tooltip": false
+    },
+
+    "pulseaudio": {
+        "format": "{icon} {volume}%",
+        "format-muted": "󰝟 Mudo",
+        "format-icons": {
+            "headphone": "󰋋",
+            "hands-free": "󰋎",
+            "headset": "󰋎",
+            "phone": "",
+            "portable": "",
+            "car": "",
+            "default": ["󰕿", "󰖀", "󰕾"]
+        },
+        "on-click": "pavucontrol",
+        "on-scroll-up": "pactl set-sink-volume @DEFAULT_SINK@ +5%",
+        "on-scroll-down": "pactl set-sink-volume @DEFAULT_SINK@ -5%",
+        "tooltip-format": "{desc} — {volume}%"
     },
 
     "network": {
         "format-wifi": "󰖩 {signalStrength}%",
         "format-ethernet": "󰈀 Ethernet",
         "format-disconnected": "󰖪 Offline",
-        "tooltip-format": "Rede: {essid}\nIP: {ipaddr}\nSinal: {signalStrength}%"
-    },
-
-    "clock": {
-        "format": " {:%H:%M}",
-        "tooltip-format": "<big>{:%A}</big>\n{:%d/%m/%Y}\nSemana %V"
+        "tooltip-format": "Rede: {essid}\nIP: {ipaddr}\nGateway: {gwaddr}\nSinal: {signalStrength}%"
     },
 
     "temperature": {
         "critical-threshold": 85,
         "format": "{icon} {temperatureC}°C",
-        "format-icons": [
-            "",
-            "",
-            "",
-            "",
-            ""
-        ],
+        "format-critical": "󰸁 {temperatureC}°C",
+        "format-icons": ["󰔏", "󰔐", "󰔐", "󰔑", "󰔑"],
         "tooltip": true
     },
 
     "cpu": {
+        "interval": 2,
         "format": "󰍛 {usage}%",
         "tooltip": true,
-        "tooltip-format": "Uso total: {usage}%"
+        "tooltip-format": "Uso: {usage}%\nFreq média: {avg_frequency} GHz"
     },
 
     "memory": {
-        "format": "󰘚 {}%",
+        "format": "󰘚 {percentage}%",
         "tooltip": true,
-        "tooltip-format": "RAM usada: {used:0.1f} GB\nRAM total: {total:0.1f} GB"
+        "tooltip-format": "RAM: {used:0.1f} GB / {total:0.1f} GB\nSwap: {swapUsed:0.1f} GB"
     },
 
     "battery": {
         "states": {
+            "good": 80,
             "warning": 30,
             "critical": 15
         },
         "format": "{icon} {capacity}%",
         "format-charging": "󰂄 {capacity}%",
         "format-plugged": "󰂄 {capacity}%",
-        "format-icons": [
-            "󰁺",
-            "󰁻",
-            "󰁼",
-            "󰁽",
-            "󰁾",
-            "󰁿",
-            "󰂀",
-            "󰂁",
-            "󰂂",
-            "󰁹"
-        ],
-        "tooltip-format": "Carga: {capacity}%\nTempo restante: {time}"
+        "format-full": "󰁹 Cheio",
+        "format-icons": ["󰁺", "󰁻", "󰁼", "󰁽", "󰁾", "󰁿", "󰂀", "󰂁", "󰂂", "󰁹"],
+        "tooltip-format": "Carga: {capacity}%\nEstado: {timeTo}\nPotência: {power}W"
     }
 }
