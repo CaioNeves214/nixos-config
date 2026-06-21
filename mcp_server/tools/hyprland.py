@@ -98,12 +98,29 @@ class HyprlandTools(BaseTool):
                 "schema": {"type": "object", "properties": {}},
                 "function": lambda: self.backup(),
             },
+            "hyprland_search_keybind": {
+                "description": "Busca um keybind específico (por modifier+key)",
+                "schema": {
+                    "type": "object",
+                    "properties": {
+                        "modifier": {"type": "string", "description": "Modificador (ex: SUPER, CTRL)"},
+                        "key": {"type": "string", "description": "Tecla (ex: Return, F)"},
+                    },
+                    "required": ["modifier", "key"],
+                },
+                "function": self.search_keybind,
+            },
         }
 
     def read_config_tool(self) -> str:
-        """Lê a config completa."""
+        """Lista seções disponíveis (não lê tudo)."""
         config = self.read_config()
-        return f"Hyprland config ({len(config)} chars):\n\n{config}"
+        sections = ["general", "input", "decoration", "animations", "gestures", "env", "bind", "monitor"]
+        available = []
+        for section in sections:
+            if self.find_section(config, section):
+                available.append(section)
+        return f"Available sections: {', '.join(available)}\nUse 'hyprland_get_section' to read a specific section."
 
     def get_variable(self, var_name: str) -> str:
         """Obtém o valor de uma variável."""
@@ -183,6 +200,16 @@ class HyprlandTools(BaseTool):
             section_content = config[start:end]
             return f"Section '{section_name}':\n\n{section_content}"
         return f"Section '{section_name}' not found"
+
+    def search_keybind(self, modifier: str, key: str) -> str:
+        """Busca um keybind específico."""
+        config = self.read_config()
+        pattern = rf"bind\s*=\s*{re.escape(modifier)}\s*,\s*{re.escape(key)}\s*,(.+?)(?=\n|$)"
+        match = re.search(pattern, config, re.MULTILINE)
+        if match:
+            full_bind = match.group(0)
+            return f"Found: {full_bind}"
+        return f"Keybind {modifier}+{key} not found"
 
     def update_section_tool(self, section_name: str, properties: dict) -> str:
         """Atualiza uma seção com novas propriedades."""

@@ -49,11 +49,24 @@ class HyperpaperTools(BaseTool):
         }
 
     def read_config_tool(self) -> str:
-        """Lê a config do Hyprpaper."""
+        """Lista wallpapers configurados."""
         if self.config_path.stat().st_size == 0:
             return "Hyprpaper config is empty"
         config = self.read_config()
-        return f"Hyprpaper config:\n\n{config}"
+        import re
+        wallpapers = re.findall(r'wallpaper\s*=\s*([^,]+),(.+)', config)
+        preloads = re.findall(r'preload\s*=\s*(.+)', config)
+        result = ""
+        if wallpapers:
+            result += "Wallpapers:\n"
+            for monitor, path in wallpapers:
+                result += f"  {monitor.strip()}: {path.strip()}\n"
+        if preloads:
+            result += "Preloads: " + ", ".join(preloads) + "\n"
+        if not wallpapers and not preloads:
+            result = "No wallpapers configured"
+        result += "\nUse 'hyprpaper_set_wallpaper' to add/update."
+        return result
 
     def set_wallpaper(self, monitor: str, path: str) -> str:
         """Define o wallpaper para um monitor."""

@@ -62,6 +62,15 @@ class BaseTool(ABC):
         start, end = section
         return config[:start] + new_content + config[end:]
 
+    def get_section_content(self, config: str, section_name: str) -> str | None:
+        """Extrai apenas o conteúdo de uma seção (sem as chaves)."""
+        section = self.find_section(config, section_name)
+        if not section:
+            return None
+        start, end = section
+        content = config[start:end]
+        return content
+
     @abstractmethod
     def get_tools(self) -> dict:
         """Retorna dict de tools com names, descriptions e functions."""

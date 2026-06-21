@@ -61,3 +61,46 @@ Dotfiles under `dotfiles/` are **symlinked into `~/.config/`** by the Home Manag
 - Fan control uses `mbpfan` tuned for MacBook Pro thermals (`modules/system/fan.nix`).
 - `nixpkgs.config.allowUnfree = true` is set globally, so unfree packages (discord, etc.) can be added without per-package overrides.
 - `nix-command` and `flakes` experimental features are enabled in `nix.settings`.
+
+## MCP Server Integration
+
+**Always consult available MCP servers before reasoning independently.** This repository has access to specialized MCP servers (nixos, nix-ricing) that expose tools for package queries, NixOS options, and system configuration.
+
+**Token economy principle:** MCP tools retrieve only what's needed, avoiding redundant file reads and parsing. Always use them first.
+
+**Before solving a problem yourself:**
+1. Check which MCP servers are available in the current session
+2. Review their tool capabilities
+3. Use their tools first if they can help with the task
+
+**Why:** MCP tools are optimized for real-time data (live package searches, current options, cache status) and eliminate token overhead from reasoning or manual lookups.
+
+**When to reason independently:** Only if an MCP server has no relevant tools for the current task, or if its tools would clearly not help (e.g., debugging a local file).
+
+### nix-ricing Server (modular, token-efficient)
+
+Hyprland:
+- `hyprland_read_config` → lists available sections (not the full config)
+- `hyprland_get_section SECTION` → reads specific section only (general, input, gestures, etc)
+- `hyprland_search_keybind MODIFIER KEY` → finds keybind by modifier+key (not full config)
+- `hyprland_get_variable $VAR` → single variable value
+- `hyprland_set_variable`, `hyprland_set_keybind` → write operations
+
+Waybar:
+- `waybar_read_config` → lists modules by position (left, center, right)
+- `waybar_read_section SECTION config|style` → reads specific module or CSS selector
+- `waybar_add_module` → add new module
+
+Kitty:
+- `kitty_read_config` → lists option categories (font, colors, window)
+- `kitty_search_option OPTION` → finds specific option value
+- `kitty_set_option` → write operation
+
+Hyprpaper:
+- `hyprpaper_read_config` → lists wallpapers configured
+- `hyprpaper_set_wallpaper` → set wallpaper
+
+**Examples:**
+- "Change SUPER+D binding" → `hyprland_search_keybind SUPER D`, then `hyprland_set_keybind`
+- "Edit waybar clock module" → `waybar_read_section clock config`, then edit
+- "Find font size" → `kitty_search_option font_size` (not full config)

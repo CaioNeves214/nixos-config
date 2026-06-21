@@ -47,19 +47,66 @@ class WaybarTools(BaseTool):
                 "schema": {"type": "object", "properties": {}},
                 "function": lambda: self.backup(),
             },
+            "waybar_read_section": {
+                "description": "Lê uma seção específica do config ou style (ex: module 'clock', CSS selector '#waybar')",
+                "schema": {
+                    "type": "object",
+                    "properties": {
+                        "section": {"type": "string", "description": "Nome da seção (ex: clock, pulseaudio, #waybar, #window)"},
+                        "file_type": {"type": "string", "enum": ["config", "style"], "description": "Tipo de arquivo"},
+                    },
+                    "required": ["section", "file_type"],
+                },
+                "function": self.read_section,
+            },
         }
 
     def read_config_tool(self) -> str:
-        """Lê a config do Waybar."""
+        """Lista módulos do Waybar (não lê config inteira)."""
         config = self.read_config()
-        return f"Waybar config:\n\n{config}"
+        import re
+        modules = re.findall(r'"modules-(\w+)"\s*:\s*\[(.*?)\]', config, re.DOTALL)
+        result = "Waybar modules:\n"
+        for position, mods in modules:
+            mod_list = [m.strip().strip('"') for m in mods.split(",")]
+            result += f"  {position}: {', '.join(mod_list)}\n"
+        result += "\nUse 'waybar_read_section' to read specific module config."
+        return result
 
     def read_style(self) -> str:
-        """Lê o CSS do Waybar."""
+        """Lista seções de style do Waybar."""
         style_path = self.config_path.parent / "style.css"
-        if style_path.exists():
-            return f"Waybar style.css:\n\n{style_path.read_text()}"
-        return "Waybar style.css not found"
+        if not style_path.exists():
+            return "Waybar style.css not found"
+
+        import re
+        content = style_path.read_text()
+        selectors = re.findall(r'^([#.][\w\-]+)\s*\{', content, re.MULTILINE)
+        return f"CSS selectors: {', '.join(selectors)}\nUse 'waybar_read_section' to read a specific selector."
+
+    def read_section(self, section: str, file_type: str) -> str:
+        """Lê seção específica de config ou style."""
+        if file_type == "config":
+            config = self.read_config()
+            import re
+            # Tenta encontrar módulo [section]
+            pattern = r'"' + re.escape(section) + r'"\s*:\s*\{(.*?)(?=\n\s*"[^"]*"\s*:|$)}'
+            match = re.search(pattern, config, re.DOTALL)
+            if match:
+                return f"Module '{section}' config:\n{match.group(0)}"
+            return f"Module '{section}' not found in config"
+        else:  # style
+            style_path = self.config_path.parent / "style.css"
+            if not style_path.exists():
+                return "style.css not found"
+            content = style_path.read_text()
+            import re
+            # Busca selector { ... }
+            pattern = re.escape(section) + r'\s*\{(.*?)\}'
+            match = re.search(pattern, content, re.DOTALL)
+            if match:
+                return f"CSS selector '{section}':\n{match.group(0)}"
+            return f"Selector '{section}' not found in style.css"
 
     def add_module(self, module_name: str, position: str) -> str:
         """Adiciona um módulo ao Waybar (implementação simplificada)."""

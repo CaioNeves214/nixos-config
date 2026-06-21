@@ -40,14 +40,50 @@ class KittyTools(BaseTool):
                 "schema": {"type": "object", "properties": {}},
                 "function": lambda: self.backup(),
             },
+            "kitty_search_option": {
+                "description": "Busca o valor atual de uma opção específica",
+                "schema": {
+                    "type": "object",
+                    "properties": {
+                        "option": {"type": "string", "description": "Nome da opção (ex: font_size, foreground)"},
+                    },
+                    "required": ["option"],
+                },
+                "function": self.search_option,
+            },
         }
 
     def read_config_tool(self) -> str:
-        """Lê a config do Kitty."""
+        """Lista categorias de opções do Kitty."""
         if self.config_path.stat().st_size == 0:
             return "Kitty config is empty"
         config = self.read_config()
-        return f"Kitty config:\n\n{config}"
+        import re
+        options = re.findall(r'^(\w+)\s+', config, re.MULTILINE)
+        categories = {
+            'font': [o for o in options if 'font' in o or 'size' in o],
+            'colors': [o for o in options if 'color' in o or 'background' in o or 'foreground' in o],
+            'window': [o for o in options if 'window' in o or 'padding' in o],
+            'other': [o for o in options if o not in sum([[o for o in options if c in o] for c in ['font', 'color', 'background', 'foreground', 'window', 'padding']], [])]
+        }
+        result = "Kitty config categories:\n"
+        for cat, opts in categories.items():
+            if opts:
+                result += f"  {cat}: {', '.join(sorted(set(opts)))}\n"
+        result += "\nUse 'kitty_search_option' to find a specific option."
+        return result
+
+    def search_option(self, option: str) -> str:
+        """Busca uma opção específica."""
+        import re
+        if self.config_path.stat().st_size == 0:
+            return f"Option '{option}' not found (config is empty)"
+        config = self.read_config()
+        pattern = rf"^{re.escape(option)}\s+(.+?)$"
+        match = re.search(pattern, config, re.MULTILINE)
+        if match:
+            return f"{option} {match.group(1).strip()}"
+        return f"Option '{option}' not found"
 
     def set_option(self, option: str, value: str) -> str:
         """Define uma opção no Kitty."""
