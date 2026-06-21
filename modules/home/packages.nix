@@ -14,5 +14,9 @@
      gsimplecal # Calendário popup (abre ao clicar no relógio)
      brightnessctl # Controle de brilho via scroll no módulo backlight
      pavucontrol # Mixer de áudio (abre ao clicar no volume)
+
+     # Fonts (Nerd Fonts para ícones da waybar)
+     nerd-fonts.jetbrains-mono
+     nerd-fonts.symbols-only
    ];
  }
