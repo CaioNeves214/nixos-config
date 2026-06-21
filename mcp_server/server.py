@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 MCP Server para ricing NixOS + Hyprland.
-Implementa o protocolo MCP com tools para diferentes componentes do sistema.
+Implementa JSON-RPC 2.0 conforme o protocolo MCP.
 """
 
 import json
@@ -16,7 +16,7 @@ from .tools.waybar import WaybarTools
 from .tools.hyprpaper import HyperpaperTools
 
 logging.basicConfig(
-    level=logging.DEBUG,
+    level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     handlers=[logging.StreamHandler(sys.stderr)]
 )
@@ -29,124 +29,101 @@ class RicingMCPServer:
         self._register_tools()
 
     def _register_tools(self):
-        """Registra todos os tools disponíveis."""
-        hyprland = HyprlandTools()
-        kitty = KittyTools()
-        waybar = WaybarTools()
-        hyprpaper = HyperpaperTools()
-
-        # Hyprland tools
-        self.tools.update(hyprland.get_tools())
-
-        # Kitty tools
-        self.tools.update(kitty.get_tools())
-
-        # Waybar tools
-        self.tools.update(waybar.get_tools())
-
-        # Hyprpaper tools
-        self.tools.update(hyprpaper.get_tools())
+        tool_classes = [HyprlandTools, KittyTools, WaybarTools, HyperpaperTools]
+        for cls in tool_classes:
+            try:
+                instance = cls()
+                self.tools.update(instance.get_tools())
+            except Exception as e:
+                logger.warning(f"Could not load {cls.__name__}: {e}")
 
         logger.info(f"Registered {len(self.tools)} tools")
 
-    def handle_message(self, message: dict[str, Any]) -> dict[str, Any]:
-        """Processa mensagens do protocolo MCP."""
-        msg_type = message.get("type")
+    def _ok(self, request_id: Any, result: Any) -> dict:
+        return {"jsonrpc": "2.0", "id": request_id, "result": result}
 
-        if msg_type == "initialize":
-            return self._handle_initialize(message)
-        elif msg_type == "resources/read":
-            return self._handle_resources_read(message)
-        elif msg_type == "tools/list":
-            return self._handle_tools_list(message)
-        elif msg_type == "tools/call":
-            return self._handle_tools_call(message)
-        else:
-            return {"error": f"Unknown message type: {msg_type}"}
+    def _err(self, request_id: Any, code: int, message: str) -> dict:
+        return {"jsonrpc": "2.0", "id": request_id, "error": {"code": code, "message": message}}
 
-    def _handle_initialize(self, message: dict) -> dict:
-        """Retorna informações sobre o servidor MCP."""
-        return {
-            "protocolVersion": "2024-11-05",
-            "capabilities": {
-                "tools": {},
-                "resources": {},
-            },
-            "serverInfo": {
-                "name": "nix-ricing-mcp",
-                "version": "0.1.0",
-            },
-        }
+    def handle_request(self, request: dict) -> dict | None:
+        request_id = request.get("id")
+        method = request.get("method", "")
+        params = request.get("params", {})
 
-    def _handle_tools_list(self, message: dict) -> dict:
-        """Lista todos os tools disponíveis."""
-        tools_list = []
-        for tool_name, tool_func in self.tools.items():
-            tools_list.append({
-                "name": tool_name,
-                "description": tool_func.get("description", ""),
-                "inputSchema": tool_func.get("schema", {}),
+        # Notifications (no id) — don't respond
+        if "id" not in request:
+            return None
+
+        if method == "initialize":
+            return self._ok(request_id, {
+                "protocolVersion": "2024-11-05",
+                "capabilities": {
+                    "tools": {},
+                },
+                "serverInfo": {
+                    "name": "nix-ricing-mcp",
+                    "version": "0.1.0",
+                },
             })
-        return {"tools": tools_list}
 
-    def _handle_tools_call(self, message: dict) -> dict:
-        """Executa um tool chamado."""
-        tool_name = message.get("name")
-        arguments = message.get("arguments", {})
+        elif method == "tools/list":
+            tools_list = []
+            for name, tool in self.tools.items():
+                tools_list.append({
+                    "name": name,
+                    "description": tool.get("description", ""),
+                    "inputSchema": tool.get("schema", {"type": "object", "properties": {}}),
+                })
+            return self._ok(request_id, {"tools": tools_list})
 
-        if tool_name not in self.tools:
-            return {"error": f"Tool not found: {tool_name}"}
+        elif method == "tools/call":
+            tool_name = params.get("name")
+            arguments = params.get("arguments", {})
 
-        try:
-            tool_func = self.tools[tool_name]["function"]
-            result = tool_func(**arguments)
-            return {"content": [{"type": "text", "text": result}]}
-        except Exception as e:
-            logger.error(f"Error calling tool {tool_name}: {e}", exc_info=True)
-            return {"error": str(e)}
+            if tool_name not in self.tools:
+                return self._err(request_id, -32601, f"Tool not found: {tool_name}")
 
-    def _handle_resources_read(self, message: dict) -> dict:
-        """Lê recursos (arquivos de config)."""
-        uri = message.get("uri", "")
+            try:
+                result = self.tools[tool_name]["function"](**arguments)
+                return self._ok(request_id, {
+                    "content": [{"type": "text", "text": str(result)}]
+                })
+            except Exception as e:
+                logger.error(f"Error calling tool {tool_name}: {e}", exc_info=True)
+                return self._err(request_id, -32603, str(e))
 
-        try:
-            path = Path(uri.replace("file://", ""))
-            if path.exists():
-                content = path.read_text()
-                return {"contents": [{"uri": uri, "mimeType": "text/plain", "text": content}]}
-            else:
-                return {"error": f"File not found: {uri}"}
-        except Exception as e:
-            logger.error(f"Error reading resource {uri}: {e}")
-            return {"error": str(e)}
+        elif method == "ping":
+            return self._ok(request_id, {})
+
+        else:
+            return self._err(request_id, -32601, f"Method not found: {method}")
 
 
 def main():
-    """Função principal — lê JSON do stdin e responde no stdout."""
     server = RicingMCPServer()
-
     logger.info("Starting MCP Server for NixOS Ricing...")
 
-    try:
-        while True:
-            line = sys.stdin.readline()
-            if not line:
-                break
+    for line in sys.stdin:
+        line = line.strip()
+        if not line:
+            continue
 
-            try:
-                message = json.loads(line)
-                response = server.handle_message(message)
+        try:
+            request = json.loads(line)
+        except json.JSONDecodeError as e:
+            logger.error(f"Invalid JSON: {e}")
+            response = {"jsonrpc": "2.0", "id": None, "error": {"code": -32700, "message": "Parse error"}}
+            print(json.dumps(response), flush=True)
+            continue
+
+        try:
+            response = server.handle_request(request)
+            if response is not None:
                 print(json.dumps(response), flush=True)
-            except json.JSONDecodeError as e:
-                logger.error(f"Invalid JSON: {e}")
-                print(json.dumps({"error": "Invalid JSON"}), flush=True)
-            except Exception as e:
-                logger.error(f"Error processing message: {e}", exc_info=True)
-                print(json.dumps({"error": str(e)}), flush=True)
-
-    except KeyboardInterrupt:
-        logger.info("Shutting down...")
-        sys.exit(0)
+        except Exception as e:
+            logger.error(f"Unhandled error: {e}", exc_info=True)
+            response = {"jsonrpc": "2.0", "id": request.get("id"), "error": {"code": -32603, "message": str(e)}}
+            print(json.dumps(response), flush=True)
 
 
 if __name__ == "__main__":
