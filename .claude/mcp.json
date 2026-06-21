@@ -1,0 +1,15 @@
+{
+  "mcpServers": {
+    "nix-ricing": {
+      "command": "python3",
+      "args": [
+        "-m",
+        "mcp_server.server"
+      ],
+      "env": {
+        "PYTHONPATH": "/home/caio/nix-config"
+      },
+      "description": "MCP Server para ricing NixOS - Hyprland, Kitty, Waybar, Hyprpaper"
+    }
+  }
+}

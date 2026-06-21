@@ -1,0 +1,15 @@
+{
+  "mcpServers": {
+    "nix-ricing": {
+      "command": "python3",
+      "args": [
+        "-m",
+        "mcp_server"
+      ],
+      "env": {
+        "PYTHONPATH": "/home/caio/nix-config"
+      },
+      "disabled": false
+    }
+  }
+}

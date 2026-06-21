@@ -1,0 +1,2 @@
+# MCP Server for NixOS Ricing
+# Minimal dependencies - uses only stdlib
