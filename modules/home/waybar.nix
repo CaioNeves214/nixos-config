@@ -1,9 +1,9 @@
-{ ... }:
+{ config, ... }:
 
 {
   xdg.configFile."waybar/config.jsonc".source =
-    ../../dotfiles/waybar/config.jsonc;
+    config.lib.file.mkOutOfStoreSymlink /home/caio/nix-config/dotfiles/waybar/config.jsonc;
 
   xdg.configFile."waybar/style.css".source =
-    ../../dotfiles/waybar/style.css;
+    config.lib.file.mkOutOfStoreSymlink /home/caio/nix-config/dotfiles/waybar/style.css;
 }
