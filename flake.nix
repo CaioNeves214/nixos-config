@@ -38,6 +38,10 @@
             home-manager.useGlobalPkgs = true;
             home-manager.useUserPackages = true;
 
+            # Faz backup (em vez de falhar) quando um arquivo não-gerenciado
+            # estiver no caminho de um symlink do Home Manager.
+            home-manager.backupFileExtension = "backup";
+
             home-manager.users.caio =
               import ./home/caio.nix;
           }
