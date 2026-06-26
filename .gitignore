@@ -1,5 +1,6 @@
 # editor
-.vscode/
+.vscode/*
+!.vscode/settings.json
 .idea/
 
 # system

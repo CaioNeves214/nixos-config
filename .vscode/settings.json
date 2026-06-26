@@ -1,0 +1,8 @@
+{
+  // O style.css do waybar é GTK CSS (@define-color, alpha(), @primary, -gtk-*),
+  // que NÃO é CSS web padrão. O validador embutido acusa falsos positivos.
+  // Desligamos a validação de CSS aqui (o único CSS do repo é GTK CSS).
+  "css.validate": false,
+  "less.validate": false,
+  "scss.validate": false
+}

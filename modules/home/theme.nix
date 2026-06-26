@@ -43,7 +43,7 @@ let
     fi
 
     # Extrai a paleta e renderiza os includes de cor (kitty/hypr/waybar).
-    wallust run "$wp"
+    wallust run -q "$wp"
 
     # Recarrega os apps para aplicar as novas cores.
     command -v hyprctl >/dev/null 2>&1 && hyprctl reload >/dev/null 2>&1 || true
