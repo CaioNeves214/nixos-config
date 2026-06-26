@@ -180,22 +180,22 @@ window#waybar {
 }
 
 #battery.good {
-    color: @secondary;
+    color: lightgreen;
 }
 
 #battery.warning {
-    color: @secondary;
+    color: gold;
     animation: pulse-warning 1s ease infinite alternate;
 }
 
 #battery.critical {
-    color: @alert;
+    color: lightcoral;
     animation: pulse-critical 0.6s ease infinite alternate;
 }
 
 #battery.charging,
 #battery.plugged {
-    color: @secondary;
+    color: lime;
 }
 
 #battery:hover {
