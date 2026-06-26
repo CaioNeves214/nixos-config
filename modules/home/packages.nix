@@ -33,6 +33,7 @@ in
     waybar # TaskBar
     rofi # Launcher program
     hyprpaper # Wallpaper
+    wallust # Gera paleta de cores a partir do wallpaper (design system)
     xfce.thunar # File Explorer
     mako # Notification daemon
     discord # Voice channel

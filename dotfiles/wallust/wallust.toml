@@ -1,0 +1,24 @@
+# Design System — fonte única de cores derivadas do wallpaper.
+#
+# wallust extrai as cores dominantes da imagem e renderiza os 3 templates abaixo,
+# escrevendo um include de cor em cada app. Os apps fazem source/import desse include.
+# Trocar a paleta inteira = trocar o wallpaper e rodar `update-theme`.
+
+# Backend de extração (resized = bom equilíbrio precisão/velocidade).
+backend = "resized"
+
+# Espaço de cor para selecionar as cores mais prominentes.
+color_space = "lch"
+
+# Esquema: 8 cores escuras, fundo escuro e contraste claro.
+palette = "dark"
+
+# Garante contraste legível em relação ao fundo (evita texto ilegível).
+check_contrast = true
+
+# Mapeamento template -> destino.
+# 'template' é relativo a ~/.config/wallust/templates/ ; 'target' é caminho absoluto.
+[templates]
+kitty  = { template = 'colors-kitty.conf', target = '~/.config/kitty/colors.conf' }
+hypr   = { template = 'colors-hypr.conf',  target = '~/.config/hypr/colors.conf' }
+waybar = { template = 'colors-waybar.css', target = '~/.config/waybar/colors.css' }

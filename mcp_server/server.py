@@ -14,6 +14,7 @@ from .tools.hyprland import HyprlandTools
 from .tools.kitty import KittyTools
 from .tools.waybar import WaybarTools
 from .tools.hyprpaper import HyperpaperTools
+from .tools.theme import ThemeTools
 
 logging.basicConfig(
     level=logging.INFO,
@@ -29,7 +30,7 @@ class RicingMCPServer:
         self._register_tools()
 
     def _register_tools(self):
-        tool_classes = [HyprlandTools, KittyTools, WaybarTools, HyperpaperTools]
+        tool_classes = [HyprlandTools, KittyTools, WaybarTools, HyperpaperTools, ThemeTools]
         for cls in tool_classes:
             try:
                 instance = cls()

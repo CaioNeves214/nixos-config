@@ -1,3 +1,6 @@
+/* Design system: cores vêm de colors.css (gerado por wallust). */
+@import "colors.css";
+
 /* ── Animações ─────────────────────────────────────────────── */
 
 @keyframes slide-in {
@@ -6,13 +9,13 @@
 }
 
 @keyframes pulse-warning {
-    from { box-shadow: 0 0 6px rgba(249, 226, 175, 0.3); }
-    to   { box-shadow: 0 0 14px rgba(249, 226, 175, 0.6); }
+    from { box-shadow: 0 0 6px alpha(@secondary, 0.3); }
+    to   { box-shadow: 0 0 14px alpha(@secondary, 0.6); }
 }
 
 @keyframes pulse-critical {
-    from { background: rgba(243, 139, 168, 0.12); box-shadow: 0 0 6px rgba(243, 139, 168, 0.3); }
-    to   { background: rgba(243, 139, 168, 0.25); box-shadow: 0 0 18px rgba(243, 139, 168, 0.6); }
+    from { background: alpha(@alert, 0.12); box-shadow: 0 0 6px alpha(@alert, 0.3); }
+    to   { background: alpha(@alert, 0.25); box-shadow: 0 0 18px alpha(@alert, 0.6); }
 }
 
 /* ── Base ───────────────────────────────────────────────────── */
@@ -27,7 +30,7 @@
 
 window#waybar {
     background: transparent;
-    color: #cdd6f4;
+    color: @text;
     animation: slide-in 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
@@ -36,7 +39,7 @@ window#waybar {
 .modules-left,
 .modules-center,
 .modules-right {
-    background: rgba(17, 17, 27, 0.88);
+    background: alpha(@base, 0.88);
     border: 1px solid rgba(255, 255, 255, 0.07);
     border-radius: 16px;
     padding: 0 4px;
@@ -61,7 +64,7 @@ window#waybar {
     margin: 4px 2px;
     border-radius: 12px;
     transition: background 0.25s ease, box-shadow 0.25s ease, color 0.2s ease;
-    color: #cdd6f4;
+    color: @text;
 }
 
 /* ── Workspaces ─────────────────────────────────────────────── */
@@ -71,7 +74,7 @@ window#waybar {
 }
 
 #workspaces button {
-    color: #45475a;
+    color: alpha(@text, 0.35);
     padding: 2px 10px;
     margin: 2px;
     border-radius: 10px;
@@ -82,27 +85,27 @@ window#waybar {
 }
 
 #workspaces button.active {
-    color: #cba6f7;
-    background: rgba(203, 166, 247, 0.16);
-    box-shadow: 0 0 14px rgba(203, 166, 247, 0.25);
+    color: @primary;
+    background: alpha(@primary, 0.16);
+    box-shadow: 0 0 14px alpha(@primary, 0.25);
 }
 
 #workspaces button:hover {
-    color: #cdd6f4;
-    background: rgba(255, 255, 255, 0.09);
-    box-shadow: 0 0 8px rgba(255, 255, 255, 0.1);
+    color: @text;
+    background: alpha(@text, 0.09);
+    box-shadow: 0 0 8px alpha(@text, 0.1);
 }
 
 #workspaces button.urgent {
-    color: #f38ba8;
-    background: rgba(243, 139, 168, 0.16);
+    color: @alert;
+    background: alpha(@alert, 0.16);
     animation: pulse-critical 0.7s ease infinite alternate;
 }
 
 /* ── Título da janela ───────────────────────────────────────── */
 
 #window {
-    color: #6c7086;
+    color: alpha(@text, 0.55);
     font-style: italic;
     font-size: 12px;
 }
@@ -110,117 +113,117 @@ window#waybar {
 /* ── Relógio ────────────────────────────────────────────────── */
 
 #clock {
-    color: #89dceb;
+    color: @primary;
     font-weight: bold;
     font-size: 14px;
 }
 
 #clock:hover {
-    background: rgba(137, 220, 235, 0.12);
-    color: #cdd6f4;
-    box-shadow: 0 0 16px rgba(137, 220, 235, 0.22);
+    background: alpha(@primary, 0.12);
+    color: @text;
+    box-shadow: 0 0 16px alpha(@primary, 0.22);
 }
 
 /* ── Rede ───────────────────────────────────────────────────── */
 
 #network {
-    color: #89b4fa;
+    color: @primary;
 }
 
 #network.disconnected {
-    color: #f38ba8;
+    color: @alert;
 }
 
 #network:hover {
-    background: rgba(137, 180, 250, 0.1);
+    background: alpha(@primary, 0.1);
 }
 
 /* ── Temperatura ────────────────────────────────────────────── */
 
 #temperature {
-    color: #a6e3a1;
+    color: @secondary;
 }
 
 #temperature.critical {
-    color: #f38ba8;
+    color: @alert;
     animation: pulse-critical 0.8s ease infinite alternate;
 }
 
 #temperature:hover {
-    background: rgba(166, 227, 161, 0.1);
+    background: alpha(@secondary, 0.1);
 }
 
 /* ── CPU ────────────────────────────────────────────────────── */
 
 #cpu {
-    color: #fab387;
+    color: @secondary;
 }
 
 #cpu:hover {
-    background: rgba(250, 179, 135, 0.1);
+    background: alpha(@secondary, 0.1);
 }
 
 /* ── Memória ────────────────────────────────────────────────── */
 
 #memory {
-    color: #f9e2af;
+    color: @secondary;
 }
 
 #memory:hover {
-    background: rgba(249, 226, 175, 0.1);
+    background: alpha(@secondary, 0.1);
 }
 
 /* ── Bateria ────────────────────────────────────────────────── */
 
 #battery {
-    color: #a6e3a1;
+    color: @secondary;
 }
 
 #battery.good {
-    color: #a6e3a1;
+    color: @secondary;
 }
 
 #battery.warning {
-    color: #f9e2af;
+    color: @secondary;
     animation: pulse-warning 1s ease infinite alternate;
 }
 
 #battery.critical {
-    color: #f38ba8;
+    color: @alert;
     animation: pulse-critical 0.6s ease infinite alternate;
 }
 
 #battery.charging,
 #battery.plugged {
-    color: #a6e3a1;
+    color: @secondary;
 }
 
 #battery:hover {
-    background: rgba(166, 227, 161, 0.1);
+    background: alpha(@secondary, 0.1);
 }
 
 /* ── Volume ─────────────────────────────────────────────────── */
 
 #pulseaudio {
-    color: #cba6f7;
+    color: @primary;
 }
 
 #pulseaudio.muted {
-    color: #45475a;
+    color: alpha(@text, 0.35);
 }
 
 #pulseaudio:hover {
-    background: rgba(203, 166, 247, 0.1);
+    background: alpha(@primary, 0.1);
 }
 
 /* ── Brilho ─────────────────────────────────────────────────── */
 
 #backlight {
-    color: #f9e2af;
+    color: @secondary;
 }
 
 #backlight:hover {
-    background: rgba(249, 226, 175, 0.1);
+    background: alpha(@secondary, 0.1);
 }
 
 /* ── Systray ────────────────────────────────────────────────── */
@@ -235,22 +238,22 @@ window#waybar {
 
 #tray > .needs-attention {
     -gtk-icon-effect: highlight;
-    background: rgba(243, 139, 168, 0.18);
+    background: alpha(@alert, 0.18);
     border-radius: 8px;
 }
 
 /* ── Tooltip (calendário e outros) ──────────────────────────── */
 
 tooltip {
-    background: rgba(17, 17, 27, 0.96);
-    border: 1px solid rgba(203, 166, 247, 0.2);
+    background: alpha(@base, 0.96);
+    border: 1px solid alpha(@primary, 0.2);
     border-radius: 14px;
-    color: #cdd6f4;
+    color: @text;
     padding: 10px 14px;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
 }
 
 tooltip label {
-    color: #cdd6f4;
+    color: @text;
     font-size: 13px;
 }

@@ -1,0 +1,7 @@
+/* Gerado por wallust — NÃO editar (importado por style.css via @import). */
+/* Design tokens: as 5 cores do design system. */
+@define-color base      {{background}};
+@define-color text      {{foreground}};
+@define-color primary   {{color4}};
+@define-color secondary {{color2}};
+@define-color alert     {{color1}};

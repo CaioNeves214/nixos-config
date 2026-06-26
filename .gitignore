@@ -20,3 +20,8 @@ __pycache__/
 
 # claude
 .claude/settings.local.json
+
+# design system — includes de cor gerados por wallust (artefatos de runtime)
+dotfiles/**/colors.conf
+dotfiles/**/colors.css
+*.bak
