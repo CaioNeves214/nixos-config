@@ -3,7 +3,26 @@
 let
   repoDir = "/home/caio/nix-config";
 
-  # Wrapper que aplica wallpaper + regenera a paleta + recarrega os apps.
+  # ── Picker GTK3: janela popup de seleção de wallpaper (SUPER+W) ────────────
+  pickerScript = "${repoDir}/dotfiles/scripts/wallpaper-picker.py";
+
+  pickerEnv = pkgs.python3.withPackages (ps: with ps; [ pygobject3 pycairo ]);
+
+  pickerTypelibs = builtins.concatStringsSep ":" [
+    "${pkgs.gtk3}/lib/girepository-1.0"
+    "${pkgs.glib.out}/lib/girepository-1.0"
+    "${pkgs.pango.out}/lib/girepository-1.0"
+    "${pkgs.gdk-pixbuf}/lib/girepository-1.0"
+    "${pkgs.at-spi2-core}/lib/girepository-1.0"
+    "${pkgs.harfbuzz}/lib/girepository-1.0"
+  ];
+
+  wallpaperPicker = pkgs.writeShellScriptBin "wallpaper-picker" ''
+    export GI_TYPELIB_PATH="${pickerTypelibs}:''${GI_TYPELIB_PATH:-}"
+    exec ${pickerEnv}/bin/python3 ${pickerScript} "$@"
+  '';
+
+  # ── Wrapper que aplica wallpaper + regenera a paleta + recarrega os apps ───
   updateTheme = pkgs.writeShellScriptBin "update-theme" ''
     set -euo pipefail
     export PATH="${pkgs.lib.makeBinPath [ pkgs.wallust pkgs.procps pkgs.coreutils ]}:$PATH"
@@ -54,7 +73,7 @@ let
   '';
 in
 {
-  home.packages = [ updateTheme ];
+  home.packages = [ updateTheme wallpaperPicker ];
 
   # Symlinks ao vivo: editar no repo reflete sem rebuild.
   xdg.configFile."wallust/wallust.toml".source =
