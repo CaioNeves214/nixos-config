@@ -1,0 +1,76 @@
+/* Tema principal do rofi — usa tokens do design system via colors.rasi. */
+@import "colors.rasi"
+
+* {
+    background-color: transparent;
+    text-color:       @text;
+    border:           0;
+    margin:           0;
+    padding:          0;
+    spacing:          0;
+}
+
+window {
+    background-color: @base;
+    border:           2px solid;
+    border-color:     @primary;
+    border-radius:    10px;
+    width:            480px;
+}
+
+mainbox {
+    padding: 12px;
+}
+
+inputbar {
+    background-color: @base;
+    border:           1px solid;
+    border-color:     @secondary;
+    border-radius:    6px;
+    padding:          8px 12px;
+    margin-bottom:    10px;
+    children:         [ prompt, entry ];
+}
+
+prompt {
+    text-color: @primary;
+    padding:    0 6px 0 0;
+}
+
+entry {
+    text-color:  @text;
+    placeholder: "Buscar...";
+    placeholder-color: @secondary;
+}
+
+listview {
+    lines:   8;
+    columns: 1;
+    spacing: 4px;
+}
+
+element {
+    background-color: transparent;
+    border-radius:    6px;
+    padding:          8px 10px;
+    children:         [ element-icon, element-text ];
+    spacing:          8px;
+    orientation:      horizontal;
+}
+
+element.selected.normal {
+    background-color: @primary;
+    text-color:       @base;
+}
+
+element.alternate.normal {
+    background-color: transparent;
+}
+
+element-icon {
+    size: 1.2em;
+}
+
+element-text {
+    vertical-align: 0.5;
+}

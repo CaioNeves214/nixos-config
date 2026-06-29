@@ -22,3 +22,4 @@ check_contrast = true
 kitty  = { template = 'colors-kitty.conf', target = '~/.config/kitty/colors.conf' }
 hypr   = { template = 'colors-hypr.conf',  target = '~/.config/hypr/colors.conf' }
 waybar = { template = 'colors-waybar.css', target = '~/.config/waybar/colors.css' }
+rofi  = { template = 'colors-rofi.rasi',  target = '~/.config/rofi/colors.rasi' }

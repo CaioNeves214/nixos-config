@@ -1,0 +1,9 @@
+/* Gerado por wallust — NÃO editar (importado por theme.rasi via @import). */
+/* Design tokens: as 5 cores do design system no formato rofi .rasi. */
+* {
+    base:      {{background}};
+    text:      {{foreground}};
+    primary:   {{color4}};
+    secondary: {{color2}};
+    alert:     {{color1}};
+}
