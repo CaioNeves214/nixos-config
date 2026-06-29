@@ -72,7 +72,6 @@ class WallpaperPicker(Gtk.Window):
         self.set_skip_pager_hint(True)
 
         self.connect("key-press-event", self._on_key)
-        self.connect("focus-out-event", lambda *_: Gtk.main_quit())
         self.connect("destroy", Gtk.main_quit)
 
         self._apply_css()
