@@ -18,9 +18,11 @@ COLS = 3
 # ── Cores ────────────────────────────────────────────────────────────────────
 
 def _load_colors():
+    # Fallback partilhado com o volume-popup — só usado se o include gerado
+    # pelo wallust ainda não existir (ex.: antes do primeiro update-theme).
     defaults = {
-        "base": "#1a1b26", "text": "#c0caf5",
-        "primary": "#7aa2f7", "secondary": "#414868", "alert": "#f7768e",
+        "base": "#1e1e2e", "text": "#cdd6f4",
+        "primary": "#cba6f7", "secondary": "#585b70", "alert": "#f38ba8",
     }
     try:
         txt = open(COLORS_FILE).read()

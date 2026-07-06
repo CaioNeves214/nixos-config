@@ -25,43 +25,76 @@ ICON_MUTE = '󰝟'
 ICON_LOW  = '󰕿'
 ICON_HIGH = '󰕾'
 
-CSS = b"""
-window {
-    background: rgba(17, 17, 27, 0.96);
-    border: 1px solid rgba(203, 166, 247, 0.3);
+# ── Cores do design system ────────────────────────────────────────────────────
+# Lê os tokens gerados pelo wallust (mesmo include usado pelo rofi). Nunca
+# hardcodar cor: o popup segue a paleta do wallpaper como todo o resto.
+COLORS_FILE = os.path.expanduser('~/.config/rofi/colors.rasi')
+
+# Fallback partilhado com o wallpaper-picker — só usado se o include não existir.
+_FALLBACK = {
+    'base': '#1e1e2e', 'text': '#cdd6f4',
+    'primary': '#cba6f7', 'secondary': '#585b70', 'alert': '#f38ba8',
+}
+
+
+def load_colors() -> dict:
+    c = dict(_FALLBACK)
+    try:
+        txt = open(COLORS_FILE).read()
+        for k in c:
+            m = re.search(rf'\b{k}\s*:\s*(#[0-9a-fA-F]{{6}})', txt)
+            if m:
+                c[k] = m.group(1)
+    except Exception:
+        pass
+    return c
+
+
+def _rgba(hex_color: str, alpha: float) -> str:
+    h = hex_color.lstrip('#')
+    r, g, b = int(h[0:2], 16), int(h[2:4], 16), int(h[4:6], 16)
+    return f'rgba({r},{g},{b},{alpha})'
+
+
+def build_css() -> bytes:
+    c = load_colors()
+    return f"""
+window {{
+    background: {_rgba(c['base'], 0.96)};
+    border: 1px solid {_rgba(c['primary'], 0.3)};
     border-radius: 12px;
-}
-box {
+}}
+box {{
     padding: 8px 14px;
-}
-label.vol-icon {
+}}
+label.vol-icon {{
     font-family: "JetBrainsMono Nerd Font", "Symbols Nerd Font Mono", monospace;
     font-size: 20px;
-    color: #cba6f7;
+    color: {c['primary']};
     margin-right: 6px;
-}
-scale trough {
-    background: rgba(255, 255, 255, 0.08);
+}}
+scale trough {{
+    background: {_rgba(c['text'], 0.08)};
     border-radius: 4px;
     min-height: 6px;
-}
-scale highlight {
-    background: #cba6f7;
+}}
+scale highlight {{
+    background: {c['primary']};
     border-radius: 4px;
-}
-scale slider {
-    background: #cba6f7;
+}}
+scale slider {{
+    background: {c['primary']};
     border-radius: 50%;
     min-width: 14px;
     min-height: 14px;
     margin: -4px 0;
-}
-scale value {
-    color: #cdd6f4;
+}}
+scale value {{
+    color: {c['text']};
     font-size: 12px;
     min-width: 38px;
-}
-"""
+}}
+""".encode()
 
 
 def _run(cmd):
@@ -117,7 +150,7 @@ class VolumePopup(Gtk.Window):
         self.set_app_paintable(True)
 
         provider = Gtk.CssProvider()
-        provider.load_from_data(CSS)
+        provider.load_from_data(build_css())
         Gtk.StyleContext.add_provider_for_screen(
             screen, provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
         )

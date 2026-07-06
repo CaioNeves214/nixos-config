@@ -23,3 +23,8 @@ kitty  = { template = 'colors-kitty.conf', target = '~/.config/kitty/colors.conf
 hypr   = { template = 'colors-hypr.conf',  target = '~/.config/hypr/colors.conf' }
 waybar = { template = 'colors-waybar.css', target = '~/.config/waybar/colors.css' }
 rofi  = { template = 'colors-rofi.rasi',  target = '~/.config/rofi/colors.rasi' }
+
+# Layout da waybar com as cores do calendário derivadas da paleta (Pango markup
+# não faz @import, então o config inteiro passa pelo wallust). target NÃO é
+# symlinkado pelo Home Manager — é um arquivo real gerado aqui.
+waybar_cfg = { template = 'waybar-config.jsonc', target = '~/.config/waybar/config.jsonc' }
