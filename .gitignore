@@ -25,4 +25,5 @@ __pycache__/
 # design system — includes de cor gerados por wallust (artefatos de runtime)
 dotfiles/**/colors.conf
 dotfiles/**/colors.css
+dotfiles/waybar/config.jsonc
 *.bak
