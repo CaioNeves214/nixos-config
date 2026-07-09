@@ -194,7 +194,7 @@ window#waybar {
 }
 
 #battery.charging,
-#battery.plugged {
+#battery.full {
     color: lime;
 }
 

@@ -18,6 +18,7 @@
       ../../modules/system/users.nix
       ../../modules/system/zsh.nix
       ../../modules/system/fan.nix
+      ../../modules/system/udev.nix
     ];
 
   # Bootloader.

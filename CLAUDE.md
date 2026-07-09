@@ -36,7 +36,7 @@ home/caio.nix                    # Home Manager entry point (imports all home/ m
 modules/
   system/                        # NixOS modules imported by configuration.nix
     audio.nix, bluetooth.nix, boot.nix, fan.nix, locale.nix
-    networking.nix, packages.nix, users.nix, zsh.nix
+    networking.nix, packages.nix, users.nix, zsh.nix, udev.nix
   home/                          # Home Manager modules imported by home/caio.nix
     dev.nix                      # Dev tools: nodejs_24, python311
     git.nix                      # Git identity
@@ -99,6 +99,7 @@ Colors are **not hardcoded per app** — they are derived from the current wallp
 - `home-manager` runs as a NixOS module (`home-manager.nixosModules.home-manager`), so `nixos-rebuild switch` rebuilds both system and home simultaneously.
 - `nix-ld` is enabled with a broad set of dynamic libraries to support pre-built binaries (e.g., Electron apps, VS Code extensions).
 - Fan control uses `mbpfan` tuned for MacBook Pro thermals (`modules/system/fan.nix`).
+- Waybar refreshes instantly on AC plug/unplug via a `services.udev.extraRules` rule (`modules/system/udev.nix`) that sends `SIGUSR2` (waybar's default "reload" signal) on any `power_supply` subsystem `change` event. Purely event-driven — no polling service. Note: waybar's `"signal"` module option only applies to `custom/*` modules, not built-ins like `battery`, so a full-bar `SIGUSR2` reload is used instead of a targeted module refresh.
 - `nixpkgs.config.allowUnfree = true` is set globally, so unfree packages (discord, etc.) can be added without per-package overrides.
 - `nix-command` and `flakes` experimental features are enabled in `nix.settings`.
 
