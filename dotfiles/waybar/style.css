@@ -56,7 +56,7 @@ window#waybar {
 #backlight,
 #pulseaudio,
 #network,
-#temperature,
+#custom-temperature,
 #cpu,
 #memory,
 #battery {
@@ -140,16 +140,11 @@ window#waybar {
 
 /* ── Temperatura ────────────────────────────────────────────── */
 
-#temperature {
+#custom-temperature {
     color: @secondary;
 }
 
-#temperature.critical {
-    color: @alert;
-    animation: pulse-critical 0.8s ease infinite alternate;
-}
-
-#temperature:hover {
+#custom-temperature:hover {
     background: alpha(@secondary, 0.1);
 }
 

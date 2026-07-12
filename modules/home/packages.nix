@@ -24,6 +24,16 @@ let
     exec ${pythonEnv}/bin/python3 ${volumePopupScript} "$@"
   '';
 
+  cpuTempScript = pkgs.writeText "temperature.sh"
+    (builtins.readFile ../../dotfiles/waybar/scripts/temperature.sh);
+
+  # Módulo custom/temperature: mesmo texto/ícone do módulo nativo, com
+  # temperatura por núcleo no tooltip (o módulo nativo não expõe isso).
+  cpuTemp = pkgs.writeShellScriptBin "waybar-cpu-temp" ''
+    export PATH="${pkgs.lm_sensors}/bin:${pkgs.jq}/bin:$PATH"
+    exec ${pkgs.bash}/bin/bash ${cpuTempScript} "$@"
+  '';
+
   # Wrapper around brightnessctl that enforces a 5% floor — going to 0%
   # blanks the screen with no way to see it again to bring it back up.
   brightnessCtl = pkgs.writeShellScriptBin "brightness-ctl" ''
@@ -106,5 +116,8 @@ in
 
     # Wrapper de volume com teto de 100% (evita distorção do áudio)
     volumeCtl
+
+    # Módulo custom/temperature: tooltip com temperatura por núcleo
+    cpuTemp
   ];
 }

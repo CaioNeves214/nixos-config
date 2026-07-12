@@ -24,7 +24,7 @@
         "backlight",
         "pulseaudio",
         "network",
-        "temperature",
+        "custom/temperature",
         "cpu",
         "memory",
         "battery"
@@ -119,11 +119,10 @@
         "tooltip-format": "Rede: {essid}\nIP: {ipaddr}\nGateway: {gwaddr}\nSinal: {signalStrength}%"
     },
 
-    "temperature": {
-        "critical-threshold": 85,
-        "format": "{icon} {temperatureC}°C",
-        "format-critical": "󰸁 {temperatureC}°C",
-        "format-icons": ["󰔏", "󰔐", "󰔐", "󰔑", "󰔑"],
+    "custom/temperature": {
+        "exec": "waybar-cpu-temp",
+        "return-type": "json",
+        "interval": 5,
         "tooltip": true
     },
 
