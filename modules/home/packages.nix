@@ -44,6 +44,37 @@ let
       ${pkgs.brightnessctl}/bin/brightnessctl set "''${target}%"
     fi
   '';
+
+  # Wrapper around pactl that caps sink volume at 100% — pactl's raw +N%
+  # otherwise allows boosting past 100% (up to ~153%), which distorts audio.
+  volumeCtl = pkgs.writeShellScriptBin "volume-ctl" ''
+    set -euo pipefail
+    MAX=100
+    PACTL=${pkgs.pulseaudio}/bin/pactl
+    dir="$1"
+    step="''${2:-5}"
+
+    if [ "$dir" = "mute" ]; then
+      $PACTL set-sink-mute @DEFAULT_SINK@ toggle
+      exit 0
+    fi
+
+    cur=$($PACTL get-sink-volume @DEFAULT_SINK@ | grep -oP '\d+(?=%)' | head -1)
+    $PACTL set-sink-mute @DEFAULT_SINK@ 0
+
+    if [ "$dir" = "inc" ]; then
+      target=$((cur + step))
+      if [ "$target" -gt "$MAX" ]; then
+        target=$MAX
+      fi
+    else
+      target=$((cur - step))
+      if [ "$target" -lt 0 ]; then
+        target=0
+      fi
+    fi
+    $PACTL set-sink-volume @DEFAULT_SINK@ "''${target}%"
+  '';
 in
 
 {
@@ -72,5 +103,8 @@ in
 
     # Wrapper de brilho com piso de 5% (protege contra tela apagada em 0%)
     brightnessCtl
+
+    # Wrapper de volume com teto de 100% (evita distorção do áudio)
+    volumeCtl
   ];
 }

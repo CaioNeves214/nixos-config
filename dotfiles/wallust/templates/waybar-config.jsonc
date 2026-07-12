@@ -107,8 +107,8 @@
             "default": ["󰕿", "󰖀", "󰕾"]
         },
         "on-click": "waybar-volume-popup",
-        "on-scroll-up": "pactl set-sink-volume @DEFAULT_SINK@ +1%",
-        "on-scroll-down": "pactl set-sink-volume @DEFAULT_SINK@ -1%",
+        "on-scroll-up": "volume-ctl inc 1",
+        "on-scroll-down": "volume-ctl dec 1",
         "tooltip-format": "{desc} — {volume}%"
     },
 
