@@ -23,6 +23,27 @@ let
     export PATH="${pkgs.pulseaudio}/bin:$PATH"
     exec ${pythonEnv}/bin/python3 ${volumePopupScript} "$@"
   '';
+
+  # Wrapper around brightnessctl that enforces a 5% floor — going to 0%
+  # blanks the screen with no way to see it again to bring it back up.
+  brightnessCtl = pkgs.writeShellScriptBin "brightness-ctl" ''
+    set -euo pipefail
+    MIN=5
+    dir="$1"
+    step="''${2:-5}"
+
+    cur=$(${pkgs.brightnessctl}/bin/brightnessctl -m | awk -F, '{print $4}' | tr -d '%')
+
+    if [ "$dir" = "inc" ]; then
+      ${pkgs.brightnessctl}/bin/brightnessctl set "+''${step}%"
+    else
+      target=$((cur - step))
+      if [ "$target" -lt "$MIN" ]; then
+        target=$MIN
+      fi
+      ${pkgs.brightnessctl}/bin/brightnessctl set "''${target}%"
+    fi
+  '';
 in
 
 {
@@ -48,5 +69,8 @@ in
 
     # Volume popup para waybar
     volumePopup
+
+    # Wrapper de brilho com piso de 5% (protege contra tela apagada em 0%)
+    brightnessCtl
   ];
 }
