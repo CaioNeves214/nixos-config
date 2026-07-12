@@ -19,5 +19,6 @@
     ../modules/home/kitty.nix
     ../modules/home/theme.nix
     ../modules/home/rofi.nix
+    ../modules/home/easyeffects.nix
   ];
 }

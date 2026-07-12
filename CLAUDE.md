@@ -46,6 +46,7 @@ modules/
     waybar.nix                   # Links dotfiles/waybar/style.css (config.jsonc is wallust-generated)
     theme.nix                    # DESIGN SYSTEM: wallust wiring + update-theme / wallpaper-picker
     packages.nix                 # User packages + volume-popup wrapper (GTK3 typelibs)
+    easyeffects.nix              # PipeWire EQ/bass-enhancer preset ("depth-boost") for CS4206 speakers
 dotfiles/
   hypr/hyprland.conf             # Hyprland config (keybinds, animations, input); sources colors.conf
   kitty/kitty.conf               # Kitty config; includes colors.conf
@@ -102,6 +103,7 @@ Colors are **not hardcoded per app** — they are derived from the current wallp
 - Waybar refreshes instantly on AC plug/unplug via a `services.udev.extraRules` rule (`modules/system/udev.nix`) that sends `SIGUSR2` (waybar's default "reload" signal) on any `power_supply` subsystem `change` event. Purely event-driven — no polling service. Note: waybar's `"signal"` module option only applies to `custom/*` modules, not built-ins like `battery`, so a full-bar `SIGUSR2` reload is used instead of a targeted module refresh.
 - `nixpkgs.config.allowUnfree = true` is set globally, so unfree packages (discord, etc.) can be added without per-package overrides.
 - `nix-command` and `flakes` experimental features are enabled in `nix.settings`.
+- The onboard audio codec is a Cirrus Logic CS4206, which needs `options snd-hda-intel model=mbp101` (`modules/system/audio.nix`, via `boot.extraModprobeConfig`) or the kernel's generic HDA autoparser produces thin/tinny speaker output. Even with that quirk the small 2012 speakers are physically bass-light, so `modules/home/easyeffects.nix` adds a PipeWire EQ + bass-enhancer preset (`depth-boost`, auto-loaded) to compensate in software; it requires `programs.dconf.enable = true` (set alongside the quirk in `audio.nix`) for the EasyEffects daemon to run.
 
 ## MCP Server Integration
 
