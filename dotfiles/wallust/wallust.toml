@@ -24,6 +24,11 @@ hypr   = { template = 'colors-hypr.conf',  target = '~/.config/hypr/colors.conf'
 waybar = { template = 'colors-waybar.css', target = '~/.config/waybar/colors.css' }
 rofi  = { template = 'colors-rofi.rasi',  target = '~/.config/rofi/colors.rasi' }
 
+# Tela de login (SDDM). O greeter roda como o usuário 'sddm' e não lê ~/.config,
+# então o update-theme copia este arquivo para /var/lib/sddm-theme/colors.conf
+# (diretório criado por modules/system/login.nix).
+sddm  = { template = 'colors-sddm.conf', target = '~/.cache/sddm-colors.conf' }
+
 # Layout da waybar com as cores do calendário derivadas da paleta (Pango markup
 # não faz @import, então o config inteiro passa pelo wallust). target NÃO é
 # symlinkado pelo Home Manager — é um arquivo real gerado aqui.

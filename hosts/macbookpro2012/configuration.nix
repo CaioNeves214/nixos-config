@@ -19,6 +19,7 @@
       ../../modules/system/zsh.nix
       ../../modules/system/fan.nix
       ../../modules/system/udev.nix
+      ../../modules/system/login.nix
     ];
 
   # Bootloader.
@@ -142,11 +143,7 @@
     ];
   };
 
-  # Login Manager
-  services.displayManager.sddm = {
-    enable = true;
-    wayland.enable = true;
-  };
+  # Login Manager: ver modules/system/login.nix
 
   # List packages installed in system profile. To search, run:
   # $ nix search wget

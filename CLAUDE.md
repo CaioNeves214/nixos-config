@@ -37,6 +37,7 @@ modules/
   system/                        # NixOS modules imported by configuration.nix
     audio.nix, bluetooth.nix, boot.nix, fan.nix, locale.nix
     networking.nix, packages.nix, users.nix, zsh.nix, udev.nix
+    login.nix                    # SDDM (Qt6) + custom QML greeter theme
   home/                          # Home Manager modules imported by home/caio.nix
     dev.nix                      # Dev tools: nodejs_24, python311
     git.nix                      # Git identity
@@ -48,6 +49,7 @@ modules/
     packages.nix                 # User packages + volume-popup wrapper (GTK3 typelibs)
     easyeffects.nix              # PipeWire EQ/bass-enhancer preset ("depth-boost") for CS4206 speakers
 dotfiles/
+  sddm/theme/                    # Login screen: Main.qml + theme.conf + metadata.desktop
   hypr/hyprland.conf             # Hyprland config (keybinds, animations, input); sources colors.conf
   kitty/kitty.conf               # Kitty config; includes colors.conf
   rofi/{config,theme}.rasi       # Rofi launcher; theme.rasi imports colors.rasi
@@ -80,9 +82,10 @@ Colors are **not hardcoded per app** — they are derived from the current wallp
 | Rofi    | `rofi/colors.rasi`      | `@import "colors.rasi"` in `theme.rasi`         |
 | Waybar  | `waybar/config.jsonc`   | whole layout, generated (see below)             |
 
-**Two apps can't `@import` tokens, so they get the palette differently:**
+**Three apps can't `@import` tokens, so they get the palette differently:**
 - **Waybar `config.jsonc`** — the calendar tooltip uses inline Pango markup (`<span color=…>`) which has no import mechanism, so the **entire config is a wallust template** (`wallust/templates/waybar-config.jsonc`). Edit *layout* there, not in `~/.config`. `waybar.nix` intentionally does **not** symlink `config.jsonc`.
 - **GTK popups** (`volume-popup.py`) — read the generated `rofi/colors.rasi` at runtime via a small `load_colors()` regex and build their CSS from the tokens (fallback palette only if the file is missing). `wallpaper-picker.py` uses the same pattern; keep their fallbacks in sync.
+- **SDDM greeter** (`dotfiles/sddm/theme/Main.qml`) — the greeter runs as the `sddm` user and cannot read `/home/caio`, so `update-theme` publishes its assets to **`/var/lib/sddm-theme/`** (see "Login screen" below).
 
 **Bootstrap:** the generated files (`colors.*`, `waybar/config.jsonc`) are gitignored and do not exist on a fresh checkout — run `update-theme <wallpaper>` once after the first `home-manager switch` or Waybar/colors won't be present.
 
@@ -93,6 +96,22 @@ Colors are **not hardcoded per app** — they are derived from the current wallp
 - `wallpaper-picker` — GTK3 popup to pick a wallpaper, bound to **SUPER+W** in `hyprland.conf`. Calls `update-theme` on selection.
 
 **GTK3 Python popups** (`wallpaper-picker`, `volume-popup`) need `GI_TYPELIB_PATH` wired with the `.out` outputs of glib/pango plus `at-spi2-core` and `harfbuzz` — see the `giTypelibs`/`pickerTypelibs` lets in `packages.nix` and `theme.nix` before adding another PyGObject script.
+
+## Login screen (SDDM + custom QML theme)
+
+`modules/system/login.nix` builds `dotfiles/sddm/theme/` into a theme package (`sddm-theme-caio`) and points SDDM at it. Layout: circular avatar centered, real name below, password field below; background is the current wallpaper, blurred. On `loginSucceeded` the blur dissolves while the UI fades out — same duration, same easing (`animationDuration` in `theme.conf`).
+
+Things that are easy to get wrong here:
+
+- **The greeter runs as the `sddm` user**, so it cannot read `~/.config` or `~/.cache`. All its assets live in **`/var/lib/sddm-theme/`** (created by a `systemd.tmpfiles` rule, owned by `caio` so `update-theme` writes it without sudo, `0755` so sddm reads it): `wallpaper.jpg`, `wallpaper-blur.jpg` (both from ImageMagick), `avatar.png`, and `colors.conf` (wallust template `colors-sddm.conf`, copied in from `~/.cache/`). `Main.qml` falls back to a dark palette and an initial-letter circle if any of them is missing, so a fresh checkout still logs in.
+- **The blur is pre-rendered, not a live QML effect** — an Intel HD 4000 does not want to gaussian-blur a full-screen image every frame. The animation cross-fades the blurred image out to reveal the sharp one.
+- **SDDM must be the Qt6 package** (`pkgs.kdePackages.sddm`); the 25.05 default is still Qt5 and the theme uses `QtQuick.Effects` (`MultiEffect`, for the circular avatar mask).
+- **`QML_XHR_ALLOW_FILE_READ=1`** is set on `display-manager.service`: Qt6 blocks `XMLHttpRequest` on `file://` by default, and that is how `Main.qml` reads `colors.conf`.
+- **Fonts must be system fonts** (`fonts.packages`) — the greeter does not see Home Manager's.
+- Debugging: **QML errors do not go to stderr**, they go to the journal (`journalctl -t sddm-greeter-qt6`). Test a change without rebooting with
+  `sddm-greeter-qt6 --test-mode --theme dotfiles/sddm/theme` (`sddm.canPowerOff`/`canReboot`/`canSuspend` are always `false` in test mode, so the power row is hidden there).
+
+**The user photo** goes at `dotfiles/sddm/avatar.png` (gitignored — personal, and kept out of the world-readable `/nix/store`); `update-theme` center-crops it into `/var/lib/sddm-theme/avatar.png`. Changing the photo needs only `update-theme`, not a rebuild.
 
 ## Architecture notes
 

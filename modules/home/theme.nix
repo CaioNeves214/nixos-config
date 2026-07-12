@@ -25,10 +25,12 @@ let
   # ── Wrapper que aplica wallpaper + regenera a paleta + recarrega os apps ───
   updateTheme = pkgs.writeShellScriptBin "update-theme" ''
     set -euo pipefail
-    export PATH="${pkgs.lib.makeBinPath [ pkgs.wallust pkgs.procps pkgs.coreutils ]}:$PATH"
+    export PATH="${pkgs.lib.makeBinPath [ pkgs.wallust pkgs.procps pkgs.coreutils pkgs.imagemagick ]}:$PATH"
 
     WALLPAPER_DIR="$HOME/.config/wallpapers"
     CURRENT="$HOME/.cache/current-wallpaper"
+    # Artefatos da tela de login: o greeter roda como 'sddm' e não lê $HOME.
+    SDDM_DIR="/var/lib/sddm-theme"
 
     # Resolve a imagem: argumento (nome ou caminho absoluto) ou o wallpaper atual.
     arg="''${1:-}"
@@ -61,8 +63,26 @@ let
       hyprctl hyprpaper wallpaper ",$wp" >/dev/null 2>&1 || true
     fi
 
-    # Extrai a paleta e renderiza os includes de cor (kitty/hypr/waybar).
+    # Extrai a paleta e renderiza os includes de cor (kitty/hypr/waybar/rofi/sddm).
     wallust run -q "$wp"
+
+    # Tela de login: mesmo wallpaper, nítido + versão borrada (o QML dissolve o
+    # borrão ao logar), mais a foto de usuário recortada em quadrado.
+    if [ -w "$SDDM_DIR" ]; then
+      cp -f "$HOME/.cache/sddm-colors.conf" "$SDDM_DIR/colors.conf"
+
+      magick "$wp" -resize '2560x2560>' -quality 90 "$SDDM_DIR/wallpaper.jpg"
+      magick "$wp" -resize '1280x1280>' -blur 0x28 -resize 200% -quality 85 \
+        "$SDDM_DIR/wallpaper-blur.jpg"
+
+      avatar_src="$(ls ${repoDir}/dotfiles/sddm/avatar.* 2>/dev/null | head -n1 || true)"
+      if [ -n "$avatar_src" ]; then
+        magick "$avatar_src" -resize '296x296^' -gravity center -extent 296x296 \
+          "$SDDM_DIR/avatar.png"
+      fi
+    else
+      echo ":: (login) $SDDM_DIR ausente — rode 'sudo nixos-rebuild switch' uma vez." >&2
+    fi
 
     # Recarrega os apps para aplicar as novas cores.
     command -v hyprctl >/dev/null 2>&1 && hyprctl reload >/dev/null 2>&1 || true

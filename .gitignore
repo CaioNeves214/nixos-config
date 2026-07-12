@@ -27,3 +27,7 @@ dotfiles/**/colors.conf
 dotfiles/**/colors.css
 dotfiles/waybar/config.jsonc
 *.bak
+
+# foto de usuário da tela de login (pessoal; lida direto da working tree pelo
+# update-theme, então não precisa ir para o git nem para o /nix/store)
+dotfiles/sddm/avatar.*

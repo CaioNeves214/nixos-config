@@ -1,0 +1,12 @@
+[SddmGreeterTheme]
+Name=caio
+Description=Login minimalista: avatar + nome + senha sobre o wallpaper borrado
+Author=Caio Neves
+License=MIT
+Type=qml
+Version=1.0
+Website=
+Screenshot=
+MainScript=Main.qml
+ConfigFile=theme.conf
+QtVersion=6
