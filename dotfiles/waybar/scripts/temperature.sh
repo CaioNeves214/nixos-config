@@ -10,7 +10,8 @@ ICON="󰔏"
 json=$(sensors -j coretemp-isa-0000 2>/dev/null)
 
 package_temp=$(echo "$json" | jq -r '.["coretemp-isa-0000"]["Package id 0"].temp1_input')
-package_temp_int=${package_temp%.*}
+# Largura fixa (3 dígitos) para a waybar não redimensionar a cada grau.
+package_temp_int=$(printf '%3d' "${package_temp%.*}")
 
 tooltip=$(echo "$json" | jq -r '
   .["coretemp-isa-0000"]

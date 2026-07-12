@@ -60,11 +60,25 @@ window#waybar {
 #cpu,
 #memory,
 #battery {
-    padding: 4px 14px;
-    margin: 4px 2px;
+    padding: 4px 8px;
+    margin: 4px 1px;
     border-radius: 12px;
     transition: background 0.25s ease, box-shadow 0.25s ease, color 0.2s ease;
     color: @text;
+}
+
+/* Largura fixa nos módulos de status: os formatos já são preenchidos com
+   espaços até 3 dígitos (ver waybar-config.jsonc), e a fonte é monoespaçada,
+   então o texto nunca muda de largura. O min-width apenas iguala todos os
+   módulos entre si e impede que a barra "pule" ao trocar de estado. */
+#backlight,
+#pulseaudio,
+#network,
+#custom-temperature,
+#cpu,
+#memory,
+#battery {
+    min-width: 52px;
 }
 
 /* ── Workspaces ─────────────────────────────────────────────── */
