@@ -50,7 +50,6 @@ window#waybar {
 /* ── Módulos genéricos ──────────────────────────────────────── */
 
 #workspaces,
-#window,
 #clock,
 #tray,
 #backlight,
@@ -114,14 +113,6 @@ window#waybar {
     color: @alert;
     background: alpha(@alert, 0.16);
     animation: pulse-critical 0.7s ease infinite alternate;
-}
-
-/* ── Título da janela ───────────────────────────────────────── */
-
-#window {
-    color: alpha(@text, 0.55);
-    font-style: italic;
-    font-size: 12px;
 }
 
 /* ── Relógio ────────────────────────────────────────────────── */

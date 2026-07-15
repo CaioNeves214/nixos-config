@@ -24,6 +24,7 @@
     ../modules/home/dev.nix
     ../modules/home/hyprland.nix
     ../modules/home/waybar.nix
+    ../modules/home/quickshell.nix
     ../modules/home/kitty.nix
     ../modules/home/theme.nix
     ../modules/home/rofi.nix

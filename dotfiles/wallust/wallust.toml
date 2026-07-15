@@ -33,3 +33,7 @@ sddm  = { template = 'colors-sddm.conf', target = '~/.cache/sddm-colors.conf' }
 # não faz @import, então o config inteiro passa pelo wallust). target NÃO é
 # symlinkado pelo Home Manager — é um arquivo real gerado aqui.
 waybar_cfg = { template = 'waybar-config.jsonc', target = '~/.config/waybar/config.jsonc' }
+
+# Widget de mídia (Quickshell): não tem @import, lê este JSON em runtime via
+# FileView (watchChanges), então re-tematiza ao vivo a cada update-theme.
+quickshell = { template = 'colors-quickshell.json', target = '~/.config/quickshell/colors.json' }

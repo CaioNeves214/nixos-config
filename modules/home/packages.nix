@@ -1,4 +1,4 @@
-{ pkgs, ... }:
+{ pkgs, pkgs-unstable, ... }:
 
 let
   pythonEnv = pkgs.python3.withPackages (ps: with ps; [ pygobject3 pycairo ]);
@@ -103,6 +103,8 @@ in
     brightnessctl # Controle de brilho via scroll no módulo backlight
     pavucontrol # Mixer de áudio completo
     pulseaudio # Ferramentas de cliente PulseAudio (pactl) — compatível com PipeWire
+    playerctl # Controle de players MPRIS (usado no on-click do widget de mídia)
+    pkgs-unstable.quickshell # Widget de mídia drop-down (dotfiles/quickshell); ausente no 25.05, vem do nixpkgs-unstable
 
     # Fonts (Nerd Fonts para ícones da waybar)
     nerd-fonts.jetbrains-mono

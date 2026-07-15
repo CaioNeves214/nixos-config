@@ -1,0 +1,8 @@
+{
+    "background": "{{background}}",
+    "foreground": "{{foreground}}",
+    "primary": "{{color4}}",
+    "secondary": "{{color2}}",
+    "alert": "{{color1}}",
+    "text": "{{foreground}}"
+}

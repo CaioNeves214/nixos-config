@@ -11,8 +11,7 @@
     "spacing": 0,
 
     "modules-left": [
-        "hyprland/workspaces",
-        "hyprland/window"
+        "hyprland/workspaces"
     ],
 
     "modules-center": [
@@ -45,16 +44,12 @@
         "all-outputs": false
     },
 
-    "hyprland/window": {
-        "format": " {}",
-        "max-length": 40,
-        "separate-outputs": true,
-        "rewrite": {
-            "(.*) — Mozilla Firefox": "󰈹 $1",
-            "(.*) - Brave": "󰈹 $1",
-            "(.*)kitty": "󰄛 Terminal"
-        }
-    },
+    // hyprland/window (título da janela ativa) foi removido para abrir espaço
+    // ao widget de mídia Quickshell (dotfiles/quickshell), uma superfície
+    // layer-shell própria sobreposta à esquerda da waybar — não é mais um
+    // módulo da waybar. Ver CLAUDE.md § "Media widget". Com o título fora,
+    // modules-left passa a ter largura estável (só os 5 botões de workspace),
+    // o que é o que torna viável um offset fixo em shell.qml (margins.left).
 
     "clock": {
         "format": "󰥔 {:%H:%M}",

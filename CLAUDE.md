@@ -60,6 +60,7 @@ modules/
     kitty.nix                    # Links dotfiles/kitty/kitty.conf
     rofi.nix                     # Links dotfiles/rofi/{config,theme}.rasi
     waybar.nix                   # Links dotfiles/waybar/style.css (config.jsonc is wallust-generated)
+    quickshell.nix               # Links dotfiles/quickshell (media widget, layer-shell)
     theme.nix                    # DESIGN SYSTEM: wallust wiring + update-theme / wallpaper-picker
     packages.nix                 # User packages + volume-popup wrapper (GTK3 typelibs)
     easyeffects.nix              # PipeWire EQ/bass-enhancer preset ("depth-boost") for CS4206 speakers
@@ -71,8 +72,9 @@ dotfiles/
   waybar/style.css               # Waybar styling; @import "colors.css"
   waybar/scripts/volume-popup.py # GTK3 volume popup; reads tokens from rofi/colors.rasi
   scripts/wallpaper-picker.py    # GTK3 theme/wallpaper picker window (SUPER+W)
+  quickshell/shell.qml           # Media widget: MPRIS drop-down under the waybar (layer-shell)
   wallust/wallust.toml           # Design system config: palette extraction + template targets
-  wallust/templates/             # colors-{hypr,kitty,rofi,waybar} + waybar-config.jsonc, rendered per wallpaper
+  wallust/templates/             # colors-{hypr,kitty,rofi,waybar,quickshell} + waybar-config.jsonc, rendered per wallpaper
   wallpapers/                    # Wallpaper images (symlinked to ~/.config/wallpapers)
 mcp_server/                      # Python nix-ricing MCP server (see docs/ and MCP section below)
 ```
@@ -96,11 +98,13 @@ Colors are **not hardcoded per app** — they are derived from the current wallp
 | Waybar  | `waybar/colors.css`     | `@import "colors.css";` in `style.css`          |
 | Rofi    | `rofi/colors.rasi`      | `@import "colors.rasi"` in `theme.rasi`         |
 | Waybar  | `waybar/config.jsonc`   | whole layout, generated (see below)             |
+| Quickshell | `quickshell/colors.json` | `FileView` (`watchChanges: true`) in `shell.qml` |
 
-**Three apps can't `@import` tokens, so they get the palette differently:**
+**Apps that can't `@import` tokens get the palette differently:**
 - **Waybar `config.jsonc`** — the calendar tooltip uses inline Pango markup (`<span color=…>`) which has no import mechanism, so the **entire config is a wallust template** (`wallust/templates/waybar-config.jsonc`). Edit *layout* there, not in `~/.config`. `waybar.nix` intentionally does **not** symlink `config.jsonc`.
 - **GTK popups** (`volume-popup.py`) — read the generated `rofi/colors.rasi` at runtime via a small `load_colors()` regex and build their CSS from the tokens (fallback palette only if the file is missing). `wallpaper-picker.py` uses the same pattern; keep their fallbacks in sync.
 - **SDDM greeter** (`dotfiles/sddm/theme/Main.qml`) — the greeter runs as the `sddm` user and cannot read `/home/caio`, so `update-theme` publishes its assets to **`/var/lib/sddm-theme/`** (see "Login screen" below).
+- **Quickshell** (`dotfiles/quickshell/shell.qml`) — reads `~/.config/quickshell/colors.json` (template `colors-quickshell.json`) via `FileView` with `watchChanges: true`, so the media card re-themes live on every `update-theme`, with a fallback palette embedded in the QML for a fresh checkout.
 
 **Bootstrap:** the generated files (`colors.*`, `waybar/config.jsonc`) are gitignored and do not exist on a fresh checkout — run `update-theme <wallpaper>` once after the first `home-manager switch` or Waybar/colors won't be present.
 
@@ -111,6 +115,51 @@ Colors are **not hardcoded per app** — they are derived from the current wallp
 - `wallpaper-picker` — GTK3 popup to pick a wallpaper, bound to **SUPER+W** in `hyprland.conf`. Calls `update-theme` on selection.
 
 **GTK3 Python popups** (`wallpaper-picker`, `volume-popup`) need `GI_TYPELIB_PATH` wired with the `.out` outputs of glib/pango plus `at-spi2-core` and `harfbuzz` — see the `giTypelibs`/`pickerTypelibs` lets in `packages.nix` and `theme.nix` before adding another PyGObject script.
+
+## Media widget (Quickshell)
+
+The now-playing control is **not** a waybar module — GTK/waybar drawers can only expand
+horizontally inside the bar's own row, and the goal was a card that **drops down** below the bar
+on hover with fluid animation and retracts on mouse-leave (inspired by adaptive eww music widgets
+seen on r/unixporn). That needs its own compositor surface, so it's a separate
+[Quickshell](https://quickshell.org) (QtQuick/QML) **layer-shell** app: `dotfiles/quickshell/shell.qml`,
+symlinked live via `modules/home/quickshell.nix` to `~/.config/quickshell/` (Quickshell auto-discovers
+`shell.qml` there — no `-c`/`-p` flag needed) and started by `exec-once = quickshell` in `hyprland.conf`.
+
+- **Not embedded in waybar** — it's a `PanelWindow` anchored `top`+`left`, `exclusiveZone: 0` (doesn't
+  push windows), rendered above windows and visually flush under the waybar (`margins.top` matches
+  waybar's own `margin-top`). It only *looks* like part of the bar.
+- **Trigger**: a small always-visible thumb (album art or a fallback glyph) sitting in the bar's row,
+  where `group/mediaplayer` used to be — that module and its `custom/media-*` children were removed
+  from `wallust/templates/waybar-config.jsonc` and `waybar/style.css`. `hyprland/window` (the focused
+  window title) was also dropped from `modules-left` to free the space and, importantly, to make the
+  bar's left-hand pill a **fixed width** (just the 5 workspace buttons) — `hyprland/window`'s width
+  varied with the window title, which made any fixed pixel offset for the widget impossible to align.
+  `margins.left` in `shell.qml` is a hand-tuned pixel offset to sit after `hyprland/workspaces`; if the
+  number of workspaces or the bar layout changes, re-tune it visually.
+- **The `PanelWindow`'s size is fixed, never animated** — `implicitWidth`/`implicitHeight` are constant
+  (barHeight + cardHeight), sized for the fully-expanded state up front. Animating a wlr-layer-shell
+  surface's size directly (what an earlier version did) requires the compositor to reconfigure the
+  Wayland surface every frame; Hyprland doesn't do this smoothly, and it showed up as the card
+  rendering half-clipped/stale-looking. The open/close animation instead happens **inside** the
+  fixed surface: the card lives in a `clip: true` `Item` (`cardClip`) whose `height` animates
+  (`Behavior on height`, `NumberAnimation`/`OutCubic`, ~280ms) — a plain QML property animation, not a
+  surface resize.
+- **Hover** — two `HoverHandler`s, one nested inside the thumb `Rectangle` and one inside `cardClip`,
+  combined into `root.expanded` via a `Binding`. A `HoverHandler`'s hit-region follows its **parent
+  Item's geometry**, not its `target` property — so each is declared *inside* the item it should
+  track, rather than attached to the top-level `PanelWindow` (which would make the entire fixed-size
+  320px-wide surface hoverable, including empty space beside the icon). No polling scripts: playback
+  state, track metadata, and position/length come from Quickshell's built-in **MPRIS service**
+  (`Quickshell.Services.Mpris`, `Mpris.players`), replacing the old `playerctl`+`jq` bash scripts
+  (`waybar-media-play`/`waybar-media-info`, now deleted) that polled at `interval:1`. `playerctl` itself
+  stays installed only as a general CLI convenience.
+- **Colors** — wallust palette, not album-art-derived (unlike the eww reference), to stay consistent
+  with the rest of the design system — see the table above.
+- **`nix-ricing` doesn't cover Quickshell** — there's no `mcp__nix-ricing__quickshell_*` tool; edit
+  `shell.qml` directly like any other QML/dotfile. Live-reloads on save (Quickshell watches its config).
+- **Hardware**: Intel HD 4000 (2012 MacBook Pro) — same lesson as the SDDM greeter's pre-rendered blur:
+  keep animations to opacity/height/position, avoid heavy shader effects.
 
 ## Login screen (SDDM + custom QML theme)
 
