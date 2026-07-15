@@ -2,6 +2,21 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## 🔒 REGRA DE OURO — INEGOCIÁVEL: MCP first, sempre
+
+**Antes de abrir qualquer arquivo para ler, antes de planejar qualquer implementação, e antes de escrever qualquer arquivo, verifique se um MCP server (`nix-ricing`, `nixos` ou `codebase-memory`) pode fornecer essa informação — e use-o primeiro.** `Read`/`Grep`/`Write` direto só entram depois de esgotar as tools MCP relevantes, ou quando a tarefa não tem nenhuma tool MCP aplicável (ex.: debugar um arquivo local específico, scripts fora do escopo dos servers).
+
+Isso vale para:
+- Leitura de config (Hyprland, Waybar, Kitty, Hyprpaper, tema/wallust) → usar as tools `mcp__nix-ricing__*` correspondentes, nunca `Read` direto no dotfile.
+- Escrita/edição de config → usar as tools de `set`/`update` do MCP quando existirem, antes de `Edit`/`Write` manual.
+- Qualquer dúvida sobre pacotes nixpkgs, opções NixOS/home-manager/nix-darwin, flakes, canais, cache binário → usar `mcp__nixos__nix` / `mcp__nixos__nix_versions`, nunca confiar em conhecimento de treinamento nem em `nix search` manual.
+- Navegação/entendimento de código (ex.: `mcp_server/`, scripts Python, achar onde uma função é chamada, mapear dependências) → usar `mcp__codebase-memory__*` (`search_graph`, `trace_path`, `get_code_snippet`, `search_code`, `get_architecture`) antes de `Read`/`Grep` varrendo arquivos manualmente — é ordens de magnitude mais barato em tokens.
+- Planejamento (Plan Mode) → antes de esboçar qualquer plano de implementação, consultar os MCP servers relevantes para levantar o estado atual real, em vez de assumir a partir do código ou de memória.
+
+**Essa regra se estende integralmente a subagentes.** Sempre que o usuário (ou o próprio fluxo) acionar o Plan Mode, ou qualquer subagente via `Agent`/`Task`, o prompt passado ao subagente deve incluir explicitamente esta regra de ouro: consultar e usar os MCP servers disponíveis (`nix-ricing`, `nixos`, `codebase-memory`) antes de ler, planejar ou escrever qualquer coisa. Um subagente não herda este arquivo automaticamente na sua instrução de tarefa — repita a regra no prompt sempre que delegar trabalho.
+
+Ver detalhes das tools disponíveis na seção "MCP Server Integration" mais abaixo.
+
 ## What this repo is
 
 NixOS + Home Manager configuration for a MacBook Pro 2012 running NixOS 25.05 with Hyprland (Wayland compositor). Managed as a Nix flake.
@@ -126,7 +141,7 @@ Things that are easy to get wrong here:
 
 ## MCP Server Integration
 
-**Always consult available MCP servers before reasoning independently.** This repository has access to specialized MCP servers (nixos, nix-ricing) that expose tools for package queries, NixOS options, and system configuration.
+**Always consult available MCP servers before reasoning independently.** This repository has access to specialized MCP servers (nixos, nix-ricing, codebase-memory) that expose tools for package queries, NixOS options, system configuration, and codebase structure.
 
 **Token economy principle:** MCP tools retrieve only what's needed, avoiding redundant file reads and parsing. Always use them first.
 
@@ -172,3 +187,21 @@ Theme / Design System (wallust palette):
 - "Change SUPER+D binding" → `hyprland_search_keybind SUPER D`, then `hyprland_set_keybind`
 - "Edit waybar clock module" → `waybar_read_section clock config`, then edit
 - "Find font size" → `kitty_search_option font_size` (not full config)
+
+### codebase-memory Server (structural code graph, token-efficient)
+
+[codebase-memory-mcp](https://github.com/DeusData/codebase-memory-mcp) — parses this repo's code (Python `mcp_server/`, shell/Python scripts under `dotfiles/`) into a tree-sitter-based structural graph, so navigation/search costs a query instead of reading whole files. It is **not packaged in nixpkgs**; it's run straight from its own flake via `nix run github:DeusData/codebase-memory-mcp --` (same pattern as the `nixos` server), registered in `.claude/mcp.json` as `codebase-memory`. No system rebuild needed to use it — `nix run` fetches/builds and caches the binary via the Nix store on first use.
+
+**Scope:** `CBM_ALLOWED_ROOT=/home/caio/nix-config` restricts `index_repository` to this repo only. Graph/cache lives in `CBM_CACHE_DIR=~/.cache/codebase-memory-mcp` (not in the repo, not gitignored — it's outside the working tree entirely).
+
+Key tools:
+- `index_repository` / `index_status` — (re)build the graph; run once per significant change, not per query.
+- `search_graph` — structured search by label/name/file/degree (replaces grepping for a symbol).
+- `search_code` — grep-like text search within the indexed graph, no filesystem walk.
+- `get_code_snippet` — fetch a function/class body by qualified name instead of reading the whole file.
+- `trace_path` — call-graph traversal (who calls what, inbound/outbound).
+- `detect_changes` — map `git diff` to affected symbols/risk before editing.
+- `get_architecture` — languages, packages, hotspots overview of the repo.
+- `semantic_query` — embedding-based search when you don't know the exact symbol name.
+
+**When to use:** any question about "where is X defined", "what calls Y", "what changed and what does it affect" in this repo's code (mainly `mcp_server/` and the Python scripts in `dotfiles/`) — reach for these tools before `Read`/`Grep`, per the golden rule at the top of this file. Plain dotfile config values (Hyprland/Waybar/Kitty options) still go through `nix-ricing`, not this server.

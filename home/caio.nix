@@ -9,6 +9,14 @@
 
   programs.home-manager.enable = true;
 
+  # Cursor padrão do Linux (Adwaita: preto com borda branca)
+  home.pointerCursor = {
+    gtk.enable = true;
+    package = pkgs.adwaita-icon-theme;
+    name = "Adwaita";
+    size = 24;
+  };
+
   imports = [
 
     ../modules/home/git.nix

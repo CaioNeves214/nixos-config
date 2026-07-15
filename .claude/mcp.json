@@ -10,6 +10,15 @@
         "PYTHONPATH": "/home/caio/nix-config"
       },
       "description": "MCP Server para ricing NixOS - Hyprland, Kitty, Waybar, Hyprpaper"
+    },
+    "codebase-memory": {
+      "command": "/home/caio/.local/bin/codebase-memory-mcp",
+      "args": [],
+      "env": {
+        "CBM_ALLOWED_ROOT": "/home/caio/nix-config",
+        "CBM_CACHE_DIR": "/home/caio/.cache/codebase-memory-mcp"
+      },
+      "description": "Grafo estrutural do codebase (tree-sitter + LSP embutido) para busca/navegação de código com baixo custo de tokens. Binário nativo instalado via install.sh oficial (não compilado via Nix)."
     }
   }
 }
