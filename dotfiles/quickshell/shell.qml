@@ -37,7 +37,15 @@ ShellRoot {
     }
 
     property var players: Mpris.players.values
-    property MprisPlayer player: players.length > 0 ? players[0] : null
+    // Alguns players (ex.: Brave/Chromium com MediaSession) ficam registrados
+    // no MPRIS mesmo sem nenhuma faixa carregada — expõem playbackState
+    // "Stopped" e trackTitle vazio, e antes isso deixava o ícone do
+    // navegador preso no thumb mesmo sem nada tocando. Só conta como "há
+    // player" quem tem título de faixa de fato.
+    property var activePlayers: players.filter(function(p) {
+        return p.trackTitle && p.trackTitle.length > 0
+    })
+    property MprisPlayer player: activePlayers.length > 0 ? activePlayers[0] : null
     property bool hasPlayer: player !== null
     property bool expanded: false
     property bool playerTick: false
@@ -147,23 +155,10 @@ ShellRoot {
                 border.width: 1
             }
 
-            Item {
-                anchors.fill: parent
-                anchors.margins: 5
-                clip: true
-
-                Image {
-                    id: art
-                    anchors.fill: parent
-                    source: (root.hasPlayer && root.player.trackArtUrl) ? root.player.trackArtUrl : ""
-                    fillMode: Image.PreserveAspectCrop
-                    visible: source !== ""
-                }
-            }
-
+            // Trigger é só o ícone de nota musical — sem capa da mídia aqui.
+            // A capa (quando existe) só aparece no card expandido no hover.
             Text {
                 anchors.centerIn: parent
-                visible: !art.visible
                 text: "\u{f001}"
                 font.family: "JetBrainsMono Nerd Font"
                 font.pixelSize: 16

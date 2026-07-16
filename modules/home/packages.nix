@@ -55,6 +55,16 @@ let
     fi
   '';
 
+  # Screenshot de área selecionada direto para a área de transferência
+  # (SUPER+SHIFT+S). grim captura, slurp deixa selecionar a região,
+  # wl-copy joga na clipboard; notify-send avisa que já pode colar.
+  screenshotClipboard = pkgs.writeShellScriptBin "screenshot-clipboard" ''
+    set -euo pipefail
+    geometry=$(${pkgs.slurp}/bin/slurp) || exit 0
+    ${pkgs.grim}/bin/grim -g "$geometry" - | ${pkgs.wl-clipboard}/bin/wl-copy --type image/png
+    ${pkgs.libnotify}/bin/notify-send "Screenshot" "Copiado para a área de transferência" -i camera-photo
+  '';
+
   # Wrapper around pactl that caps sink volume at 100% — pactl's raw +N%
   # otherwise allows boosting past 100% (up to ~153%), which distorts audio.
   volumeCtl = pkgs.writeShellScriptBin "volume-ctl" ''
@@ -105,6 +115,10 @@ in
     pulseaudio # Ferramentas de cliente PulseAudio (pactl) — compatível com PipeWire
     playerctl # Controle de players MPRIS (usado no on-click do widget de mídia)
     pkgs-unstable.quickshell # Widget de mídia drop-down (dotfiles/quickshell); ausente no 25.05, vem do nixpkgs-unstable
+    grim # Captura de tela (screenshot)
+    slurp # Seleção de área para screenshot
+    wl-clipboard # wl-copy/wl-paste (área de transferência Wayland)
+    libnotify # notify-send (feedback do screenshot)
 
     # Fonts (Nerd Fonts para ícones da waybar)
     nerd-fonts.jetbrains-mono
@@ -121,5 +135,8 @@ in
 
     # Módulo custom/temperature: tooltip com temperatura por núcleo
     cpuTemp
+
+    # Screenshot de área selecionada para a área de transferência (SUPER+SHIFT+S)
+    screenshotClipboard
   ];
 }
