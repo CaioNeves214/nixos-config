@@ -127,16 +127,33 @@ symlinked live via `modules/home/quickshell.nix` to `~/.config/quickshell/` (Qui
 `shell.qml` there — no `-c`/`-p` flag needed) and started by `exec-once = quickshell` in `hyprland.conf`.
 
 - **Not embedded in waybar** — it's a `PanelWindow` anchored `top`+`left`, `exclusiveZone: 0` (doesn't
-  push windows), rendered above windows and visually flush under the waybar (`margins.top` matches
-  waybar's own `margin-top`). It only *looks* like part of the bar.
-- **Trigger**: a small always-visible thumb (album art or a fallback glyph) sitting in the bar's row,
-  where `group/mediaplayer` used to be — that module and its `custom/media-*` children were removed
-  from `wallust/templates/waybar-config.jsonc` and `waybar/style.css`. `hyprland/window` (the focused
-  window title) was also dropped from `modules-left` to free the space and, importantly, to make the
-  bar's left-hand pill a **fixed width** (just the 5 workspace buttons) — `hyprland/window`'s width
-  varied with the window title, which made any fixed pixel offset for the widget impossible to align.
-  `margins.left` in `shell.qml` is a hand-tuned pixel offset to sit after `hyprland/workspaces`; if the
-  number of workspaces or the bar layout changes, re-tune it visually.
+  push windows), rendered above windows and visually flush with the waybar. It only *looks* like part
+  of the bar. `margins.top` is **negative** (`-44`): Hyprland anchors a layer-shell surface after the
+  zone other layers already reserved (waybar reserves 52 = 44 height + 8 margin), so `8 - 52` is what
+  puts it back at y=8, level with the bar. Check with `hyprctl monitors` (`reserved`) if the bar
+  changes height. The whole surface is `visible: root.hasPlayer` — with no MPRIS player holding an
+  actual track (Brave/Chromium register an empty one, so the filter is on `trackTitle`), the widget
+  disappears completely instead of leaving an invisible surface catching the mouse.
+- **Trigger**: a small always-visible thumb (a Nerd Font glyph, lit in `primary` while playing) sitting
+  in the bar's row, where `group/mediaplayer` used to be — that module and its `custom/media-*`
+  children were removed from `wallust/templates/waybar-config.jsonc` and `waybar/style.css`.
+  `hyprland/window` (the focused window title) was also dropped from `modules-left`, since its width
+  varied with the window title and made any alignment impossible.
+- **Horizontal alignment is computed, not hardcoded** — `hyprland/workspaces` only draws the
+  workspaces that *exist*, so the left pill grows by one button whenever a new workspace appears; a
+  constant `margins.left` misaligns on the first workspace switch. `shell.qml` reads
+  `Hyprland.workspaces` (Quickshell's Hyprland IPC service) and computes
+  `margins.left = 37 + 40 * workspaceCount`. Those two constants were **measured against the live
+  bar** (`grim` + a row-scan of the screenshot): the pill runs from x=12 to `36 + 40n`, i.e. 40px per
+  workspace button. Re-measure them if the waybar font size or the `#workspaces button` padding in
+  `style.css` changes. Moving a layer-shell surface is cheap — only *resizing* it is not — so this is
+  a plain binding, deliberately un-animated (waybar's own relayout is instant too).
+- **Input mask** — the surface is a fixed 320×(bar+card) rectangle, so without a mask it would swallow
+  every click in a 320px-wide band reaching well below the bar, over ordinary windows. `mask: Region`
+  narrows the clickable area to the thumb plus, while expanded, the card. The card's region uses
+  **explicit geometry** driven by `root.expanded` rather than `item: cardClip`: the clip's height is
+  mid-animation while opening, and an input region that lagged behind it would drop the pointer as it
+  moved down into the card, closing it again.
 - **The `PanelWindow`'s size is fixed, never animated** — `implicitWidth`/`implicitHeight` are constant
   (barHeight + cardHeight), sized for the fully-expanded state up front. Animating a wlr-layer-shell
   surface's size directly (what an earlier version did) requires the compositor to reconfigure the
@@ -154,10 +171,39 @@ symlinked live via `modules/home/quickshell.nix` to `~/.config/quickshell/` (Qui
   (`Quickshell.Services.Mpris`, `Mpris.players`), replacing the old `playerctl`+`jq` bash scripts
   (`waybar-media-play`/`waybar-media-info`, now deleted) that polled at `interval:1`. `playerctl` itself
   stays installed only as a general CLI convenience.
+- **Card contents** — album art in a `ClippingRectangle` (`Quickshell.Widgets`; a plain `Rectangle` +
+  `clip: true` clips to the square bounding box and ignores `radius`, leaving the art's corners
+  square), `asynchronous: true` on the `Image` so cover loading never blocks the render thread, title
+  / artist / `player.identity`, a progress bar that **seeks on click** (`canSeek`, writing
+  `player.position`), and prev / play-pause / next plus shuffle and loop. Shuffle and loop are hidden
+  unless the player reports `shuffleSupported` / `loopSupported` — a dead button is worse than an
+  absent one; loop cycles None → Playlist → Track and encodes the mode in color, not in a third glyph.
+  The five buttons share `dotfiles/quickshell/MediaButton.qml` (hover highlight + `active` gating);
+  it's a separate file because a QML **inline component cannot reference the enclosing file's ids**,
+  so everything has to arrive by property anyway.
+- **Keyboard / CLI control** — an `IpcHandler { target: "media" }` exposes `playPause`, `next`,
+  `previous`, `toggle` (pins the card open) and `status`. `hyprland.conf` binds the MacBook's media
+  keys (`XF86AudioPlay/Next/Prev`, as `bindl` so they survive the lock screen) and `SUPER SHIFT+M`
+  to `qs ipc call media …` instead of to `playerctl` — the widget has already resolved *which* MPRIS
+  player is the active one, and a parallel `playerctl` could pick a different one. Inspect with
+  `qs ipc show target media`.
 - **Colors** — wallust palette, not album-art-derived (unlike the eww reference), to stay consistent
-  with the rest of the design system — see the table above.
+  with the rest of the design system — see the table above. Alpha over the six tokens is the only way
+  to make hierarchy (`Qt.alpha(token, a)` is native — no hand-rolled hex helper), and the palette is
+  merged over an embedded fallback on load so a missing/incomplete `colors.json` can't leave a token
+  undefined. `blockLoading: true` on the `FileView` means the first frame is already themed.
 - **`nix-ricing` doesn't cover Quickshell** — there's no `mcp__nix-ricing__quickshell_*` tool; edit
   `shell.qml` directly like any other QML/dotfile. Live-reloads on save (Quickshell watches its config).
+- **Use the `quickshell` skill** (`.claude/skills/quickshell/`) before writing or debugging any QML
+  here. It carries the exact 0.3.0 API extracted from the installed package (`references/api-core.md`,
+  `references/api-services.md`), ready-made widget recipes (`references/patterns.md`), and the
+  pitfalls that already cost us debugging time — layer-shell surface sizing, `HoverHandler` hit
+  regions, anchor offsets vs. waybar's exclusive zone, and the Intel HD 4000 animation budget
+  (`references/gotchas.md`). It replaces the old stray `.claude/skills/quickshell.md`, which
+  described a different config's components (`qs.Config`, `OText`) that do not exist in this repo.
+- **`UPower` is not enabled on this host**, so a Quickshell battery widget would silently read 0%.
+  It needs `services.upower.enable = true;` + a rebuild. Waybar's battery works without it because
+  it reads `/sys/class/power_supply` directly.
 - **Hardware**: Intel HD 4000 (2012 MacBook Pro) — same lesson as the SDDM greeter's pre-rendered blur:
   keep animations to opacity/height/position, avoid heavy shader effects.
 

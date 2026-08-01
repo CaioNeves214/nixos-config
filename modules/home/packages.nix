@@ -107,6 +107,7 @@ in
     hyprpaper # Wallpaper
     wallust # Gera paleta de cores a partir do wallpaper (design system)
     xfce.thunar # File Explorer
+    vscode # Editor de código (VSCode)
     mako # Notification daemon
     discord # Voice channel
     gsimplecal # Calendário popup (abre ao clicar no relógio)
