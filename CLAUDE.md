@@ -134,11 +134,28 @@ symlinked live via `modules/home/quickshell.nix` to `~/.config/quickshell/` (Qui
   changes height. The whole surface is `visible: root.hasPlayer` — with no MPRIS player holding an
   actual track (Brave/Chromium register an empty one, so the filter is on `trackTitle`), the widget
   disappears completely instead of leaving an invisible surface catching the mouse.
-- **Trigger**: a small always-visible thumb (a Nerd Font glyph, lit in `primary` while playing) sitting
-  in the bar's row, where `group/mediaplayer` used to be — that module and its `custom/media-*`
-  children were removed from `wallust/templates/waybar-config.jsonc` and `waybar/style.css`.
-  `hyprland/window` (the focused window title) was also dropped from `modules-left`, since its width
-  varied with the window title and made any alignment impossible.
+- **Trigger**: a thumb (a Nerd Font glyph, lit in `primary` while playing) sitting in the bar's row,
+  where `group/mediaplayer` used to be — that module and its `custom/media-*` children were removed
+  from `wallust/templates/waybar-config.jsonc` and `waybar/style.css`. `hyprland/window` (the focused
+  window title) was also dropped from `modules-left`, since its width varied with the window title
+  and made any alignment impossible. The thumb's **width is animated, not fixed**: with no player it's
+  just the glyph (`panel.barHeight`); the moment a player appears it grows (`Behavior on width`,
+  `Easing.OutBack`, 340ms) to open space for a 5-bar audio visualizer next to the glyph — the same
+  "pill growing" gesture `hyprland/workspaces` already does when a workspace appears (see below). This
+  works even though the surface itself only becomes `visible` at that same instant: QML property
+  bindings/Behaviors keep evaluating on invisible items, so the width is already mid-animation by the
+  time the compositor maps the surface — no need to keep the surface always-mapped.
+- **Audio visualizer** — the 5 bars next to the thumb glyph are driven by **real audio**, not a fake
+  animation: `Quickshell.Services.Pipewire`'s `PwNodePeakMonitor` (node: `Pipewire.defaultAudioSink`)
+  reads the system output's live peak level, native/event-driven, no external process (no `cava`). A
+  `Timer` (90ms) samples `sqrt(peak) * 1.4` (perceptual gain) into a 5-value sliding window
+  (`root.waveSamples`); each bar's `Layout.preferredHeight` binds to one slot with its own
+  `Behavior`. `enabled: root.hasPlayer && root.player.isPlaying` gates the monitor (and resets
+  `waveSamples` to zero on `onEnabledChanged` when it turns off, so bars settle instead of freezing
+  mid-level). `PwObjectTracker { objects: [Pipewire.defaultAudioSink] }` is mandatory — without it
+  Pipewire doesn't subscribe to the node's properties and everything reads zero, silently (gotchas §9).
+  It's a peak/VU-meter reading (one float per sample), not an FFT spectrum — bars pulse with real
+  volume, not per-frequency-band data.
 - **Horizontal alignment is computed, not hardcoded** — `hyprland/workspaces` only draws the
   workspaces that *exist*, so the left pill grows by one button whenever a new workspace appears; a
   constant `margins.left` misaligns on the first workspace switch. `shell.qml` reads
@@ -159,9 +176,14 @@ symlinked live via `modules/home/quickshell.nix` to `~/.config/quickshell/` (Qui
   surface's size directly (what an earlier version did) requires the compositor to reconfigure the
   Wayland surface every frame; Hyprland doesn't do this smoothly, and it showed up as the card
   rendering half-clipped/stale-looking. The open/close animation instead happens **inside** the
-  fixed surface: the card lives in a `clip: true` `Item` (`cardClip`) whose `height` animates
-  (`Behavior on height`, `NumberAnimation`/`OutCubic`, ~280ms) — a plain QML property animation, not a
-  surface resize.
+  fixed surface: the card lives in a `clip: true` `Item` (`cardClip`) whose `height` animates — a
+  plain QML property animation, not a surface resize.
+- **Open and close are deliberately asymmetric**, via QML `States`/`Transitions` instead of one
+  symmetric `Behavior`: opening `cardClip`/`card`/`cardColumn` is slower with a slight `Easing.OutBack`
+  overshoot on the content's slide-in (staggered behind a short `PauseAnimation` so the height has
+  room first); closing is faster and `Easing.InCubic` (no overshoot) so the card doesn't look like it's
+  lingering after the mouse has already left. The mask's card `Region` still snaps to its target height
+  instantly regardless (unchanged) — it isn't and shouldn't be animated, see the input-mask note above.
 - **Hover** — two `HoverHandler`s, one nested inside the thumb `Rectangle` and one inside `cardClip`,
   combined into `root.expanded` via a `Binding`. A `HoverHandler`'s hit-region follows its **parent
   Item's geometry**, not its `target` property — so each is declared *inside* the item it should

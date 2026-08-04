@@ -8,6 +8,20 @@
 // tamanho da superfície layer-shell), §2 (HoverHandler segue o pai), §3
 // (âncora parte da zona reservada), §4 (QTBUG-137166) e §7 (position do MPRIS
 // não emite sinal de mudança).
+//
+// O thumb tem largura animada (não fixa): quando um player começa a tocar,
+// ele cresce para abrir espaço para as barrinhas do visualizer — mesmo
+// gesto de "pílula crescendo" que `hyprland/workspaces` já faz na waybar
+// (ver patterns.md #5). Isto é seguro para animar (diferente da SUPERFÍCIE
+// do PanelWindow, gotchas §1): é só a largura de um Item comum por dentro
+// da superfície, que já nasce fixa em 320px.
+//
+// O visualizer usa dado real de áudio — Pipewire.PwNodePeakMonitor no sink
+// padrão do sistema — não uma animação simulada/fake. Sem processo externo
+// (cava etc.): é um serviço nativo do Quickshell, então segue a mesma regra
+// de "serviço nativo > polling" do resto do widget.
+pragma ComponentBehavior: Bound
+
 import QtQuick
 import QtQuick.Layouts
 import Quickshell
@@ -16,6 +30,7 @@ import Quickshell.Wayland
 import Quickshell.Widgets
 import Quickshell.Hyprland
 import Quickshell.Services.Mpris
+import Quickshell.Services.Pipewire
 
 ShellRoot {
     id: root
@@ -79,6 +94,47 @@ ShellRoot {
         return ps[0];
     }
     readonly property bool hasPlayer: player !== null
+
+    // ── Visualizer de áudio real (Pipewire) ──────────────────────────────
+    // PwNodePeakMonitor lê o nível de pico do sink padrão em tempo real —
+    // é o mesmo mecanismo de um medidor de VU, não uma FFT de espectro, mas
+    // é dado de áudio de verdade (reage ao volume real tocando), não uma
+    // curva senoidal fake. PwObjectTracker é obrigatório (gotchas §9): sem
+    // ele o Pipewire não assina as propriedades do node e tudo fica zerado.
+    readonly property int waveBars: 5
+    property var waveSamples: [0, 0, 0, 0, 0]
+
+    PwObjectTracker {
+        objects: [Pipewire.defaultAudioSink]
+    }
+
+    PwNodePeakMonitor {
+        id: peakMonitor
+        node: Pipewire.defaultAudioSink
+        enabled: root.hasPlayer && root.player.isPlaying
+        // Ao pausar/parar, força as barras a assentarem em 0 em vez de
+        // congelarem no último nível — sem isto o visualizer "trava" aceso.
+        onEnabledChanged: {
+            if (!enabled)
+                root.waveSamples = new Array(root.waveBars).fill(0);
+        }
+    }
+
+    // Amostra o pico periodicamente e desliza a janela — é isto que dá o
+    // efeito de "onda" nas barras em vez de um valor só piscando.
+    // sqrt() aproxima a resposta perceptual do ouvido (não-linear); o ganho
+    // de 1.4 compensa picos de mixagem que raramente chegam perto de 1.0.
+    Timer {
+        interval: 90
+        running: peakMonitor.enabled
+        repeat: true
+        onTriggered: {
+            const level = Math.min(1, Math.sqrt(peakMonitor.peak) * 1.4);
+            const next = root.waveSamples.slice(1);
+            next.push(level);
+            root.waveSamples = next;
+        }
+    }
 
     // ── Alinhamento com a waybar ─────────────────────────────────────────
     // A pilha de workspaces da waybar NÃO tem largura fixa: `hyprland/workspaces`
@@ -215,12 +271,32 @@ ShellRoot {
         }
 
         // ── Thumb (sempre na faixa da barra) ─────────────────────────────
+        // Largura ANIMADA: colapsado é só o glyph (mesmo tamanho de sempre);
+        // com um player ativo, cresce para abrir espaço pro visualizer — o
+        // gesto de "pílula crescendo" da hyprland/workspaces (patterns.md
+        // #5) aplicado ao nosso próprio thumb. Seguro de animar (gotchas §1
+        // é sobre a SUPERFÍCIE do PanelWindow, que continua fixa em 320px;
+        // um Item comum por dentro pode animar width à vontade).
         Rectangle {
             id: thumb
-            width: panel.barHeight
+
+            readonly property int barW: 3
+            readonly property int barGap: 3
+            readonly property int visualizerWidth: root.waveBars * barW + (root.waveBars - 1) * barGap
+            readonly property int glyphZoneWidth: panel.barHeight
+
+            width: root.hasPlayer ? (glyphZoneWidth + 10 + visualizerWidth + 10) : panel.barHeight
             height: panel.barHeight
             color: "transparent"
             border.width: 0 // workaround QTBUG-137166
+
+            Behavior on width {
+                NumberAnimation {
+                    duration: 340
+                    easing.type: Easing.OutBack
+                    easing.overshoot: 1.0
+                }
+            }
 
             HoverHandler {
                 id: thumbHover
@@ -241,32 +317,102 @@ ShellRoot {
             // Gatilho é só o glyph — a capa aparece no card, no hover.
             // A cor comunica o estado: aceso tocando, apagado pausado.
             Text {
-                anchors.centerIn: parent
+                id: thumbGlyph
+                anchors.verticalCenter: parent.verticalCenter
+                anchors.left: parent.left
+                width: thumb.glyphZoneWidth
+                horizontalAlignment: Text.AlignHCenter
                 text: ""
                 font.family: root.iconFont
                 font.pixelSize: 16
                 color: (root.hasPlayer && root.player.isPlaying) ? root.cPrimary : Qt.alpha(root.cText, 0.55)
                 Behavior on color { ColorAnimation { duration: root.animFast } }
             }
+
+            // Visualizer — barras animadas com o pico real do sink padrão
+            // (root.waveSamples, amostrado pelo Timer lá em cima, dentro de
+            // root). Opacity soma à animação de largura: a barra mais fina
+            // já entra meio visível antes do thumb terminar de crescer.
+            RowLayout {
+                id: visualizer
+                anchors.verticalCenter: parent.verticalCenter
+                anchors.left: thumbGlyph.right
+                spacing: thumb.barGap
+                opacity: root.hasPlayer ? 1 : 0
+                Behavior on opacity {
+                    NumberAnimation { duration: root.animFast }
+                }
+
+                Repeater {
+                    model: root.waveBars
+                    delegate: Rectangle {
+                        id: bar
+                        required property int index
+
+                        Layout.preferredWidth: thumb.barW
+                        Layout.preferredHeight: 4 + (root.waveSamples[index] ?? 0) * 20
+                        Layout.alignment: Qt.AlignVCenter
+                        radius: thumb.barW / 2
+                        color: (root.hasPlayer && root.player.isPlaying) ? root.cPrimary : Qt.alpha(root.cText, 0.35)
+
+                        Behavior on Layout.preferredHeight {
+                            NumberAnimation { duration: 110; easing.type: Easing.OutQuad }
+                        }
+                        Behavior on color {
+                            ColorAnimation { duration: root.animFast }
+                        }
+                    }
+                }
+            }
         }
 
         // ── Card (desce no hover) ────────────────────────────────────────
         // A superfície já nasce alta o bastante; aqui é só uma propriedade QML
         // animando dentro dela, com clip.
+        //
+        // Abertura e fechamento usam States/Transitions em vez de um único
+        // Behavior simétrico: abrir é mais lento e tem um leve overshoot
+        // (Easing.OutBack) — "quanto mais animação melhor" — e fechar é
+        // rápido e seco (Easing.InCubic), pra não parecer que o card está
+        // "sobrando" na tela depois que o mouse já saiu.
         Item {
             id: cardClip
             anchors.top: thumb.bottom
             anchors.left: parent.left
             width: panel.implicitWidth
-            height: root.expanded ? panel.cardHeight : 0
+            height: 0
             clip: true
 
-            Behavior on height {
-                NumberAnimation {
-                    duration: root.animNormal
-                    easing.type: Easing.OutCubic
+            state: root.expanded ? "open" : ""
+            states: State {
+                name: "open"
+                PropertyChanges {
+                    target: cardClip
+                    height: panel.cardHeight
                 }
             }
+            transitions: [
+                Transition {
+                    from: ""
+                    to: "open"
+                    NumberAnimation {
+                        target: cardClip
+                        property: "height"
+                        duration: 300
+                        easing.type: Easing.OutCubic
+                    }
+                },
+                Transition {
+                    from: "open"
+                    to: ""
+                    NumberAnimation {
+                        target: cardClip
+                        property: "height"
+                        duration: 190
+                        easing.type: Easing.InCubic
+                    }
+                }
+            ]
 
             HoverHandler {
                 id: cardHover
@@ -278,16 +424,40 @@ ShellRoot {
                 height: panel.cardHeight
                 radius: 14
                 color: root.cBg
-                opacity: root.expanded ? 0.94 : 0
+                opacity: 0
                 border.width: 1
                 border.color: Qt.alpha(root.cPrimary, 0.25)
 
-                Behavior on opacity {
-                    NumberAnimation {
-                        duration: root.animFast
-                        easing.type: Easing.OutCubic
+                state: root.expanded ? "open" : ""
+                states: State {
+                    name: "open"
+                    PropertyChanges {
+                        target: card
+                        opacity: 0.94
                     }
                 }
+                transitions: [
+                    Transition {
+                        from: ""
+                        to: "open"
+                        NumberAnimation {
+                            target: card
+                            property: "opacity"
+                            duration: 260
+                            easing.type: Easing.OutCubic
+                        }
+                    },
+                    Transition {
+                        from: "open"
+                        to: ""
+                        NumberAnimation {
+                            target: card
+                            property: "opacity"
+                            duration: 160
+                            easing.type: Easing.InCubic
+                        }
+                    }
+                ]
 
                 ColumnLayout {
                     id: cardColumn
@@ -295,24 +465,72 @@ ShellRoot {
                     anchors.margins: 14
                     spacing: 8 // o default de Layout é 5; sempre declarar
 
-                    // Revelação escalonada: o conteúdo entra logo depois da
-                    // altura, subindo alguns pixels.
-                    opacity: root.expanded ? 1 : 0
+                    opacity: 0
                     transform: Translate {
-                        y: root.expanded ? 0 : -6
-                        Behavior on y {
-                            NumberAnimation {
-                                duration: root.animNormal
-                                easing.type: Easing.OutCubic
+                        id: cardColumnTranslate
+                        y: -10
+                    }
+
+                    state: root.expanded ? "open" : ""
+                    states: State {
+                        name: "open"
+                        PropertyChanges {
+                            target: cardColumn
+                            opacity: 1
+                        }
+                        PropertyChanges {
+                            target: cardColumnTranslate
+                            y: 0
+                        }
+                    }
+                    // Entrada: uma pausa curta deixa a altura abrir espaço
+                    // antes do texto subir, com um pequeno "estouro"
+                    // (overshoot) no final — revelação escalonada com uma
+                    // pitada de bounce. Saída: sem pausa, direto e rápido.
+                    transitions: [
+                        Transition {
+                            from: ""
+                            to: "open"
+                            SequentialAnimation {
+                                PauseAnimation {
+                                    duration: 60
+                                }
+                                ParallelAnimation {
+                                    NumberAnimation {
+                                        target: cardColumn
+                                        property: "opacity"
+                                        duration: 240
+                                        easing.type: Easing.OutCubic
+                                    }
+                                    NumberAnimation {
+                                        target: cardColumnTranslate
+                                        property: "y"
+                                        duration: 340
+                                        easing.type: Easing.OutBack
+                                        easing.overshoot: 1.3
+                                    }
+                                }
+                            }
+                        },
+                        Transition {
+                            from: "open"
+                            to: ""
+                            ParallelAnimation {
+                                NumberAnimation {
+                                    target: cardColumn
+                                    property: "opacity"
+                                    duration: 150
+                                    easing.type: Easing.InCubic
+                                }
+                                NumberAnimation {
+                                    target: cardColumnTranslate
+                                    property: "y"
+                                    duration: 170
+                                    easing.type: Easing.InCubic
+                                }
                             }
                         }
-                    }
-                    Behavior on opacity {
-                        NumberAnimation {
-                            duration: root.animNormal
-                            easing.type: Easing.OutCubic
-                        }
-                    }
+                    ]
 
                     // Capa + metadados
                     RowLayout {
