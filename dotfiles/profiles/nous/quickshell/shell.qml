@@ -31,6 +31,10 @@ import Quickshell.Widgets
 import Quickshell.Hyprland
 import Quickshell.Services.Mpris
 import Quickshell.Services.Pipewire
+// Componentes locais. Ficam em ui/ para que ~/.config/quickshell/ seja um
+// diretório real e gravável — é lá que o wallust escreve colors.json e o
+// theme-profile copia style.json (ver "Perfis visuais" no CLAUDE.md).
+import "ui"
 
 ShellRoot {
     id: root
@@ -38,13 +42,14 @@ ShellRoot {
     // ── Design system ────────────────────────────────────────────────────
     // Nenhum hex literal fora daqui: o fallback só existe porque colors.json é
     // gerado por `update-theme` e gitignored (num checkout limpo não existe).
+    // Espelha dotfiles/profiles/nous/palette.toml — mantenha os dois em sincronia.
     readonly property var fallbackColors: ({
-        background: "#1e1e2e",
-        foreground: "#cdd6f4",
-        primary: "#89b4fa",
-        secondary: "#a6e3a1",
-        alert: "#f38ba8",
-        text: "#cdd6f4"
+        background: "#07070F",
+        foreground: "#F5F5F5",
+        primary: "#0000F2",
+        secondary: "#575380",
+        alert: "#F05252",
+        text: "#F5F5F5"
     })
     property var colors: fallbackColors
 
@@ -55,9 +60,21 @@ ShellRoot {
     readonly property color cPrimary: colors.primary
     readonly property color cSecondary: colors.secondary
 
-    readonly property string iconFont: "JetBrainsMono Nerd Font"
-    readonly property int animFast: 220
-    readonly property int animNormal: 280
+    // ── Geometria do perfil "nous" ───────────────────────────────────────
+    // DESIGN.md: "Sharp corners (0-2px)" / "Don't use large border-radius".
+    // Um raio só, aplicado em tudo, para não reintroduzir hierarquia por
+    // arredondamento — a hierarquia aqui é cor e espaço.
+    readonly property int radiusSharp: 0
+
+    // Glifos continuam vindo da Nerd Font (a IBM Plex não tem os ícones de
+    // mídia); o TEXTO do card é que muda de família.
+    readonly property string iconFont: "Symbols Nerd Font"
+    readonly property string uiFont: "IBM Plex Sans"
+    readonly property string displayFont: "IBM Plex Serif"
+
+    // "Precise, technical": mais seco que o default (220/280).
+    readonly property int animFast: 160
+    readonly property int animNormal: 200
 
     FileView {
         path: Quickshell.env("HOME") + "/.config/quickshell/colors.json"
@@ -140,13 +157,16 @@ ShellRoot {
     // A pilha de workspaces da waybar NÃO tem largura fixa: `hyprland/workspaces`
     // só desenha os workspaces que existem, então a pill cresce quando um novo
     // aparece — um offset constante desalinha na primeira troca de workspace.
-    // Medido com grim contra a barra viva: a pill vai de x=12 até
-    // 36 + 40*n (40px por botão). O thumb entra 1px depois, e os 5px de margem
-    // interna dele viram o respiro visual entre as duas pills.
+    // REMEDIDO para a barra fechada deste perfil (margens zeradas, largura
+    // total) — o valor do perfil default (37 + 40n) vale para a barra
+    // flutuante dele e desalinha aqui.
+    // Medição com grim + varredura de pixel na linha y=21: passo de 40px por
+    // botão (fundo de 36 + 2×2 de margem), grupo começa no padding de 6 e
+    // termina em 12 + 40*n. O thumb entra 1px depois.
     readonly property int workspaceCount: Hyprland.workspaces.values.filter(function (w) {
         return w.id > 0; // ignora workspaces especiais (scratchpad)
     }).length
-    readonly property int barOffset: 37 + 40 * workspaceCount
+    readonly property int barOffset: 13 + 40 * workspaceCount
 
     property bool pinned: false // travado aberto via IPC (bind do Hyprland)
     property bool hovered: false
@@ -226,13 +246,16 @@ ShellRoot {
         // TAMANHO dela; e a waybar também relayouta instantaneamente, então o
         // salto sem animação é o comportamento coerente.
         //
-        // top NEGATIVO de propósito: a waybar reserva 52px (44 de altura + 8 de
-        // margem) e o Hyprland ancora layer-shells a partir do fim da zona
-        // reservada, não do topo físico. 8 - 52 = -44 devolve o widget para
-        // y=8, alinhado à barra. Conferir com `hyprctl monitors` (campo
-        // "reserved") se a altura da barra mudar.
+        // top NEGATIVO de propósito: o Hyprland ancora layer-shells a partir do
+        // FIM da zona reservada, não do topo físico. A regra é
+        // `top = y_desejado - reserved`.
+        //
+        // Neste perfil a barra é fechada e encostada no topo: `hyprctl monitors`
+        // dá reserved.top = 42 (o array é [left, top, right, bottom]) e o alvo
+        // é y=0, logo 0 - 42 = -42. No perfil default a barra flutua com margem
+        // de 8, reserved = 52 e o alvo é y=8, o que dá -44.
         margins {
-            top: -44
+            top: -42
             left: root.barOffset
         }
 
@@ -305,7 +328,7 @@ ShellRoot {
             Rectangle {
                 anchors.fill: parent
                 anchors.margins: 5
-                radius: 9 // mesma família de raios dos módulos da waybar
+                radius: root.radiusSharp // DESIGN.md: cantos retos
                 // 0.88 é o alpha(@base, 0.88) do .modules-left em style.css —
                 // é o que faz o thumb ler como parte da barra, não como card solto.
                 color: Qt.alpha(root.cBg, 0.88)
@@ -352,7 +375,7 @@ ShellRoot {
                         Layout.preferredWidth: thumb.barW
                         Layout.preferredHeight: 4 + (root.waveSamples[index] ?? 0) * 20
                         Layout.alignment: Qt.AlignVCenter
-                        radius: thumb.barW / 2
+                        radius: 0 // barras retas: leitura de VU, não de pílula
                         color: (root.hasPlayer && root.player.isPlaying) ? root.cPrimary : Qt.alpha(root.cText, 0.35)
 
                         Behavior on Layout.preferredHeight {
@@ -422,7 +445,7 @@ ShellRoot {
                 id: card
                 width: parent.width
                 height: panel.cardHeight
-                radius: 14
+                radius: root.radiusSharp
                 color: root.cBg
                 opacity: 0
                 border.width: 1
@@ -543,7 +566,7 @@ ShellRoot {
                         ClippingRectangle {
                             Layout.preferredWidth: 64
                             Layout.preferredHeight: 64
-                            radius: 10
+                            radius: root.radiusSharp
                             color: Qt.alpha(root.cPrimary, 0.12)
 
                             Image {
@@ -572,14 +595,19 @@ ShellRoot {
                                 Layout.fillWidth: true
                                 text: root.hasPlayer ? root.player.trackTitle : ""
                                 color: root.cText
-                                font.pixelSize: 14
-                                font.bold: true
+                                // O título é o único "display" do card: serif,
+                                // peso leve — a voz editorial do DESIGN.md
+                                // ("weight 300 for headings", "serif for headlines").
+                                font.family: root.displayFont
+                                font.pixelSize: 15
+                                font.weight: Font.Light
                                 elide: Text.ElideRight
                             }
                             Text {
                                 Layout.fillWidth: true
                                 text: root.hasPlayer ? root.player.trackArtist : ""
                                 color: Qt.alpha(root.cText, 0.7)
+                                font.family: root.uiFont
                                 font.pixelSize: 12
                                 elide: Text.ElideRight
                             }
@@ -590,6 +618,7 @@ ShellRoot {
                                 Layout.topMargin: 2
                                 text: root.hasPlayer ? root.player.identity : ""
                                 color: Qt.alpha(root.cText, 0.4)
+                                font.family: root.uiFont
                                 font.pixelSize: 10
                                 elide: Text.ElideRight
                             }
@@ -607,12 +636,12 @@ ShellRoot {
                             anchors.verticalCenter: parent.verticalCenter
                             width: parent.width
                             height: 4
-                            radius: 2
+                            radius: root.radiusSharp
                             color: Qt.alpha(root.cPrimary, 0.18)
 
                             Rectangle {
                                 height: parent.height
-                                radius: 2
+                                radius: root.radiusSharp
                                 color: root.cPrimary
                                 // (playerTick || true) só existe para criar a
                                 // dependência do Timer — ver gotchas §7.
@@ -637,6 +666,7 @@ ShellRoot {
                         Text {
                             text: (root.playerTick || true) && root.hasPlayer ? root.fmtTime(root.player.position) : "0:00"
                             color: Qt.alpha(root.cText, 0.6)
+                            font.family: "IBM Plex Mono"
                             font.pixelSize: 11
                         }
                         Item {
@@ -645,6 +675,7 @@ ShellRoot {
                         Text {
                             text: root.hasPlayer ? root.fmtTime(root.player.length) : "0:00"
                             color: Qt.alpha(root.cText, 0.6)
+                            font.family: "IBM Plex Mono"
                             font.pixelSize: 11
                         }
                     }

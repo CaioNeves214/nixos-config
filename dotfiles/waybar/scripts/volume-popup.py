@@ -50,6 +50,31 @@ def load_colors() -> dict:
     return c
 
 
+# ── Overlay de estilo do perfil visual ────────────────────────────────────────
+# A paleta cobre COR; o perfil ativo também define geometria e tipografia
+# (raio de borda, fonte, padding), que não cabem em tokens de cor. Este overlay
+# é carregado DEPOIS do CSS embutido e com prioridade USER, então vence sem
+# precisar duplicar a folha inteira por perfil. Ausente = perfil sem overrides.
+PROFILE_CSS = os.path.expanduser('~/.config/theme/active/gtk/popups.css')
+
+
+def apply_profile_overlay(screen) -> None:
+    try:
+        with open(PROFILE_CSS, 'rb') as fh:
+            data = fh.read()
+    except OSError:
+        return
+    try:
+        provider = Gtk.CssProvider()
+        provider.load_from_data(data)
+    except Exception:
+        # CSS inválido não deve derrubar o popup — só perde o overlay.
+        return
+    Gtk.StyleContext.add_provider_for_screen(
+        screen, provider, Gtk.STYLE_PROVIDER_PRIORITY_USER
+    )
+
+
 def _rgba(hex_color: str, alpha: float) -> str:
     h = hex_color.lstrip('#')
     r, g, b = int(h[0:2], 16), int(h[2:4], 16), int(h[4:6], 16)
@@ -154,6 +179,7 @@ class VolumePopup(Gtk.Window):
         Gtk.StyleContext.add_provider_for_screen(
             screen, provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
         )
+        apply_profile_overlay(screen)
 
         box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=0)
         self.add(box)

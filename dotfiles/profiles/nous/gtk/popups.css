@@ -1,0 +1,52 @@
+/* Overlay GTK do perfil "nous" — volume-popup e wallpaper-picker.
+ *
+ * Carregado com GTK_STYLE_PROVIDER_PRIORITY_USER, depois do CSS embutido nos
+ * scripts Python, então estas regras vencem sem precisar duplicar a folha toda.
+ * COR continua vindo da paleta (os scripts leem ~/.config/rofi/colors.rasi);
+ * aqui só entram geometria e tipografia, que tokens de cor não cobrem.
+ *
+ * DESIGN.md: cantos retos (0–2px), grid de 3.5px, IBM Plex.
+ */
+
+/* Sem cantos arredondados em lugar nenhum — é o gesto central do perfil. */
+window,
+scale trough,
+scale highlight,
+scale slider,
+button,
+entry,
+list,
+row {
+    border-radius: 0;
+}
+
+/* O slider do volume era um círculo (border-radius: 50%); vira uma barra
+   vertical fina, que lê como marcador de régua em vez de botão. */
+scale slider {
+    min-width: 4px;
+    min-height: 18px;
+    margin: -6px 0;
+}
+
+scale trough {
+    min-height: 4px;
+}
+
+/* Grid de 3.5px (7 = 2 × 3.5, 14 = 4 × 3.5). */
+box {
+    padding: 7px 14px;
+}
+
+/* Tipografia: Mono para números (não "pula" de largura), Sans para o resto.
+   Os glifos de ícone continuam na Nerd Font por fallback. */
+label {
+    font-family: "IBM Plex Sans", "Symbols Nerd Font", sans-serif;
+}
+
+label.vol-icon {
+    font-family: "Symbols Nerd Font", monospace;
+}
+
+scale value {
+    font-family: "IBM Plex Mono", monospace;
+}

@@ -1,0 +1,92 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   Perfil "nous" — rofi
+   DESIGN.md: cantos retos, um acento sólido no item selecionado
+   (o gesto do .btn-primary), grid de 3.5px, tipografia editorial.
+
+   Caminho ABSOLUTO no import: este arquivo é carregado a partir de
+   ~/.config/theme/active/, então um @import relativo cairia dentro do repo
+   em vez do colors.rasi gerado pelo wallust.
+   ═══════════════════════════════════════════════════════════════════════════ */
+@import "/home/caio/.config/rofi/colors.rasi"
+
+* {
+    background-color: transparent;
+    text-color:       @text;
+    border:           0;
+    margin:           0;
+    padding:          0;
+    spacing:          0;
+    /* `--font-body` do DESIGN.md é uma grotesca; IBM Plex Sans é a
+       correspondente instalada. */
+    font:             "IBM Plex Sans 11";
+}
+
+window {
+    background-color: @base;
+    border:           1px solid;
+    border-color:     @primary;
+    border-radius:    0;
+    width:            480px;
+}
+
+mainbox {
+    padding: 14px;
+}
+
+inputbar {
+    background-color: transparent;
+    border:           0 0 1px 0;
+    border-color:     alpha(@primary, 40%);
+    border-radius:    0;
+    padding:          0 0 10.5px 0;
+    margin:           0 0 10.5px 0;
+    children:         [ prompt, entry ];
+}
+
+prompt {
+    text-color: @primary;
+    padding:    0 7px 0 0;
+}
+
+entry {
+    text-color:        @text;
+    placeholder:       "Buscar...";
+    placeholder-color: @secondary;
+}
+
+listview {
+    lines:   8;
+    columns: 1;
+    spacing: 0;
+}
+
+element {
+    background-color: transparent;
+    border-radius:    0;
+    padding:          7px 10.5px;
+    children:         [ element-icon, element-text ];
+    spacing:          10.5px;
+    orientation:      horizontal;
+}
+
+/* Item selecionado: bloco sólido no acento, texto no canvas.
+   Sem radius, sem sombra — o contraste é a única marcação. */
+element.selected.normal {
+    background-color: @primary;
+    text-color:       @base;
+}
+
+element.alternate.normal {
+    background-color: transparent;
+}
+
+element-icon {
+    size:             1.2em;
+    background-color: transparent;
+}
+
+element-text {
+    vertical-align:   0.5;
+    background-color: transparent;
+    text-color:       inherit;
+}

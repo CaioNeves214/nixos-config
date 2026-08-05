@@ -1,6 +1,108 @@
-# Design System Inspired by Nous Portal
+# Perfil visual `nous`
+
+Look derivado do [Nous Portal](https://portal.nousresearch.com/): dark refinado, cantos
+retos, grid apertado, um único acento dominante, tipografia editorial.
+
+Ativar com `theme-profile nous`. Este arquivo tem duas partes: **como o perfil está
+implementado** (parte 1, é o que importa para mexer nele) e a **extração original do site**
+(parte 2, referência congelada). Para o mecanismo de perfis em si — o symlink `active`, a
+regra de colisão do Home Manager — ver a seção "Perfis visuais" no `CLAUDE.md`.
+
+---
+
+## Parte 1 — Como está implementado
+
+### Paleta
+
+**`palette.toml` é o único lugar onde as cores deste perfil existem.** Editar lá e rodar
+`theme-profile nous`; ele converte para o colorscheme do wallust (`palette-to-wallust.py`)
+e renderiza os mesmos 7 templates do fluxo normal. Não deriva do wallpaper — trocar de
+wallpaper com `update-theme` muda só a imagem, e o `update-theme` pula o `wallust run`
+justamente para não destruir esta paleta.
+
+| Token | Valor | Papel |
+|---|---|---|
+| `base` | `#07070F` | canvas (near-black com viés azul) |
+| `text` | `#F5F5F5` | texto |
+| `primary` | `#0000F2` | **o** acento — bordas ativas, workspaces, todos os módulos da barra |
+| `secondary` | `#575380` | muted |
+| `alert` | `#F05252` | crítico |
+
+> **A inversão em relação ao doc extraído é deliberada.** A extração rotulou `#0000F2` como
+> "background" e `#575380` como "accent". No site os papéis são o inverso na prática:
+> `#0000F2` é cor de marca/CTA sobre canvas escuro, e o próprio doc manda *"keep the overall
+> feel dark"* e *"don't introduce bright white surfaces"*. Usar `#0000F2` como fundo de
+> desktop contradiria as duas regras. **Não "conserte" de volta.**
+
+### Tipografia
+
+O site usa fontes web proprietárias (`Sigurd Variable`, `Rules Variable`). O substituto é a
+superfamília **IBM Plex** (pacote `ibm-plex` em `modules/home/packages.nix`), que cobre
+serif + sans + mono de forma coerente:
+
+| Uso | Fonte |
+|---|---|
+| Terminal, waybar, números | IBM Plex Mono |
+| Rofi, textos de UI | IBM Plex Sans |
+| Título do card de mídia | IBM Plex Serif (peso Light — o *"weight 300 for headings"* do doc) |
+| Glifos de ícone | Symbols Nerd Font (a IBM Plex não tem os ícones) |
+
+O `--font-mono` literal do site é Courier Prime; foi trocado por IBM Plex Mono por
+legibilidade em código. **`font_family` é declarado explicitamente no `kitty.conf`** — sem
+isso o kitty cai no `monospace` do fontconfig e instalar qualquer fonte nova muda o terminal
+sem querer.
+
+### Geometria
+
+- **Raio 0 em tudo** (`rounding = 0` no Hyprland, `border-radius: 0` no resto, `radiusSharp`
+  no `shell.qml`). É o gesto central do perfil.
+- **Grid de 3.5px** nos paddings internos (3.5 / 7 / 10.5 / 14).
+- **Blur desligado** no Hyprland: o doc quer superfícies escuras sólidas, não translucidez —
+  e num Intel HD 4000 é orçamento de frame de graça.
+- **Borda de janela de 1px**: o foco é marcado por cor, não por espessura.
+- **Barra fechada**: margens zeradas, largura total, encostada no topo. O fundo mora na
+  superfície da janela (`window#waybar`), não em placas por grupo como no `default`.
+
+### Constantes calibradas (não derivar no papel)
+
+O widget de mídia do Quickshell se ancora contra a zona exclusiva da waybar. **Estes números
+foram medidos na tela** e mudam se a geometria da barra mudar:
+
+| Constante | Valor aqui | Como remedir |
+|---|---|---|
+| `margins.top` | `-42` | `hyprctl monitors -j` → `reserved` (array é `[left, top, right, bottom]`); a regra é `top = y_desejado - reserved.top`, aqui `0 - 42` |
+| `barOffset` | `13 + 40n` | `grim` + varredura de pixel: botão de workspace tem passo de 40px (fundo 36 + 2×2 de margem); o grupo termina em `12 + 40n` e o thumb entra 1px depois |
+
+(No perfil `default` os mesmos valores são `-44` e `37 + 40n`, porque lá a barra flutua com
+margem de 8/12.)
+
+### Limitação conhecida: ícone e valor são um label só
+
+Todos os módulos da waybar têm formato `"{icon} {value}"` num **único label GTK**, e CSS não
+colore parte de um label. Por isso o perfil pinta o módulo inteiro em `@primary` — o número
+vai junto com o ícone. Separar os dois exigiria markup Pango (`<span color=…>`) dentro de
+`dotfiles/wallust/templates/waybar-config.jsonc`, que é **compartilhado com o perfil
+`default`** e portanto o repintaria também.
+
+Exceções propositais à cor única: rede desconectada e bateria crítica ficam em `@alert` (um
+aviso que continua azul deixa de ser aviso), e volume mudo fica apagado.
+
+### Onde o perfil NÃO chega
+
+- **Tela de login (SDDM)**: segue a *cor* (o template `colors-sddm.conf` é renderizado pelo
+  `wallust cs`), mas **não a fonte** — ela é assada no `/nix/store` e o greeter não sabe qual
+  perfil está ativo no boot.
+- **Apps GTK** (thunar, nm-connection-editor): não seguem o tema. Gap pré-existente do rice,
+  não é regressão deste perfil.
+
+---
+
+## Parte 2 — Extração original do site
 
 > Auto-extracted from `https://portal.nousresearch.com/` on 2026-08-04
+>
+> Referência congelada. É a fonte da parte 1 — onde as duas divergirem, **a parte 1 é o que
+> está no código**, e a divergência está justificada acima.
 
 ## 1. Visual Theme & Atmosphere
 

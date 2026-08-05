@@ -142,6 +142,22 @@ separator {{
             Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION,
         )
 
+        # Overlay do perfil visual: geometria/tipografia que a paleta não cobre.
+        # Carregado depois e com prioridade USER, então vence o CSS acima sem
+        # duplicá-lo. Ausente = perfil sem overrides. Mesmo padrão do
+        # volume-popup.py — mantenha os dois em sincronia.
+        try:
+            with open(os.path.expanduser(
+                    "~/.config/theme/active/gtk/popups.css"), "rb") as fh:
+                overlay = Gtk.CssProvider()
+                overlay.load_from_data(fh.read())
+                Gtk.StyleContext.add_provider_for_screen(
+                    Gdk.Screen.get_default(), overlay,
+                    Gtk.STYLE_PROVIDER_PRIORITY_USER,
+                )
+        except Exception:
+            pass
+
     # ── Layout ────────────────────────────────────────────────────────────────
 
     def _build_ui(self):

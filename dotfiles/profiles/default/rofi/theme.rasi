@@ -1,5 +1,7 @@
-/* Tema principal do rofi — usa tokens do design system via colors.rasi. */
-@import "colors.rasi"
+/* Tema principal do rofi — usa tokens do design system via colors.rasi.
+   Caminho ABSOLUTO: carregado a partir de ~/.config/theme/active/, um @import
+   relativo cairia dentro do repo em vez do colors.rasi gerado pelo wallust. */
+@import "/home/caio/.config/rofi/colors.rasi"
 
 * {
     background-color: transparent;

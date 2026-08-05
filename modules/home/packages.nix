@@ -137,6 +137,14 @@ in
     nerd-fonts.jetbrains-mono
     nerd-fonts.symbols-only
 
+    # Superfamília do perfil visual "nous" (Serif + Sans + Mono coerentes).
+    # dotfiles/profiles/nous/DESIGN.md pede serif editorial nos títulos e sans
+    # no corpo; a Mono é a
+    # do terminal. Os ícones continuam vindo da Symbols Nerd Font por fallback.
+    # Cuidado: o kitty cai no "monospace" do fontconfig quando font_family não
+    # é declarado — por isso os dois perfis declaram a fonte explicitamente.
+    ibm-plex
+
     # Volume popup para waybar
     volumePopup
 

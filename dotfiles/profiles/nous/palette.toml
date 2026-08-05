@@ -1,0 +1,73 @@
+## ══════════════════════════════════════════════════════════════════════════
+##  Perfil "nous" — paleta FIXA
+##
+##  Este perfil NÃO deriva cor do wallpaper. Trocar de wallpaper com
+##  `update-theme` muda só a imagem de fundo; estas cores ficam.
+##
+##  Para mudar o visual inteiro: edite os hex aqui e rode `theme-profile nous`.
+##  É o único arquivo de cor do perfil — tudo (hyprland, waybar, kitty, rofi,
+##  quickshell, tela de login) é gerado a partir dele pelos templates em
+##  dotfiles/wallust/templates/.
+##
+##  NOTA SOBRE O DESIGN.md: o extractor rotulou #0000F2 como "background" e
+##  #575380 como "accent". No site esses papéis são o inverso na prática —
+##  #0000F2 é cor de marca/CTA sobre um canvas escuro, e o próprio doc manda
+##  "keep the overall feel dark / don't introduce bright white surfaces".
+##  A inversão abaixo (azul = ACENTO, canvas near-black) é deliberada.
+##  Não "conserte" isso de volta.
+## ══════════════════════════════════════════════════════════════════════════
+
+## ── Os 5 tokens do design system ──────────────────────────────────────────
+## Mapeamento para o wallust (feito por dotfiles/scripts/palette-to-wallust.py):
+##   base -> background   text -> foreground
+##   primary -> color4    secondary -> color2    alert -> color1
+
+# Canvas. Near-black com viés azul, para o acento assentar sem vibrar.
+# Não usar preto puro (#000000) — o DESIGN.md pede explicitamente contra.
+base      = "#07070F"
+
+# Texto. O #F5F5F5 do DESIGN.md, não branco puro.
+text      = "#F5F5F5"
+
+# ACENTO dominante. Borda de janela ativa, workspace ativo, relógio,
+# barra de progresso do player, foco do rofi. O DESIGN.md é enfático em
+# usar um único acento — resista a introduzir um segundo.
+primary   = "#0000F2"
+
+# Muted. CPU/memória/bateria na waybar, placeholders, texto secundário.
+secondary = "#575380"
+
+# Crítico. Bateria baixa, rede caída, workspace urgente. (--red-500 do site.)
+alert     = "#F05252"
+
+# Cursor do terminal. Sem esta chave, cai em `primary`.
+cursor    = "#0000F2"
+
+
+## ── Paleta ANSI do terminal ───────────────────────────────────────────────
+## O kitty consome os 16 slots; o calendário da waybar usa color6 e color8.
+##
+## ATENÇÃO: color1/color2/color4 declarados aqui são IGNORADOS — os tokens
+## acima são a autoridade sobre esses três slots (o script sobrescreve).
+## Isso é o contrato do design system: `secondary` ocupa o slot do verde ANSI,
+## então "verde" no terminal sai como o muted violeta. O perfil default tem o
+## mesmo comportamento (o wallust também sorteia color2), não é regressão.
+
+[ansi]
+color0  = "#16161F"  # preto
+color1  = "#F05252"  # vermelho    (sobrescrito por `alert`)
+color2  = "#575380"  # verde       (sobrescrito por `secondary`)
+color3  = "#FDBA8C"  # amarelo
+color4  = "#0000F2"  # azul        (sobrescrito por `primary`)
+color5  = "#9B8AFB"  # magenta
+color6  = "#6B9FFF"  # ciano
+color7  = "#C9C9D4"  # branco
+
+color8  = "#3A3A4A"  # preto brilhante
+color9  = "#F98080"  # vermelho brilhante
+color10 = "#7B76A8"  # verde brilhante
+color11 = "#FF8A4C"  # amarelo brilhante
+color12 = "#3B3BFF"  # azul brilhante
+color13 = "#B9ADFF"  # magenta brilhante
+color14 = "#9CC0FF"  # ciano brilhante
+color15 = "#F5F5F5"  # branco brilhante

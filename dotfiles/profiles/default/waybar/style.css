@@ -1,5 +1,8 @@
-/* Design system: cores vêm de colors.css (gerado por wallust). */
-@import "colors.css";
+/* Design system: cores vêm de colors.css (gerado por wallust).
+   Caminho ABSOLUTO: este arquivo é carregado a partir de ~/.config/theme/active/,
+   então um @import relativo resolveria para dentro do repo, não para o
+   colors.css que o wallust escreve em ~/.config/waybar/. */
+@import url("file:///home/caio/.config/waybar/colors.css");
 
 /* ── Animações ─────────────────────────────────────────────── */
 

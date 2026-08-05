@@ -1,0 +1,12 @@
+/* Overlay GTK do perfil "default" — volume-popup e wallpaper-picker.
+ *
+ * Deliberadamente VAZIO de regras: o CSS embutido nos dois scripts Python já
+ * É o visual deste perfil (raio 12px, JetBrainsMono Nerd Font), então não há
+ * nada a sobrescrever. O arquivo existe para documentar o ponto de extensão e
+ * para que a árvore dos dois perfis seja simétrica.
+ *
+ * Carregado com GTK_STYLE_PROVIDER_PRIORITY_USER, depois do provider embutido —
+ * qualquer regra aqui vence. As cores continuam vindo da paleta (os scripts
+ * leem ~/.config/rofi/colors.rasi); use este arquivo só para geometria e
+ * tipografia. Ver "Perfis visuais" no CLAUDE.md.
+ */
