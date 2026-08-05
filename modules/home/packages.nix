@@ -65,6 +65,17 @@ let
     ${pkgs.libnotify}/bin/notify-send "Screenshot" "Copiado para a área de transferência" -i camera-photo
   '';
 
+  # Histórico de clipboard estilo Win+V: lista o histórico (cliphist) via
+  # rofi -dmenu, que já herda o tema/paleta do design system (theme.rasi
+  # importa colors.rasi, gerado pelo wallust), e recoloca a seleção na
+  # área de transferência. Sem seleção (Esc), sai sem copiar nada.
+  clipboardPicker = pkgs.writeShellScriptBin "clipboard-picker" ''
+    set -euo pipefail
+    selected=$(${pkgs.cliphist}/bin/cliphist list | ${pkgs.rofi}/bin/rofi -dmenu -p "Clipboard") || exit 0
+    [ -n "$selected" ] || exit 0
+    echo "$selected" | ${pkgs.cliphist}/bin/cliphist decode | ${pkgs.wl-clipboard}/bin/wl-copy
+  '';
+
   # Wrapper around pactl that caps sink volume at 100% — pactl's raw +N%
   # otherwise allows boosting past 100% (up to ~153%), which distorts audio.
   volumeCtl = pkgs.writeShellScriptBin "volume-ctl" ''
@@ -119,6 +130,7 @@ in
     grim # Captura de tela (screenshot)
     slurp # Seleção de área para screenshot
     wl-clipboard # wl-copy/wl-paste (área de transferência Wayland)
+    cliphist # Histórico de clipboard (SUPER+V), watchers via exec-once no hyprland.conf
     libnotify # notify-send (feedback do screenshot)
 
     # Fonts (Nerd Fonts para ícones da waybar)
@@ -139,5 +151,8 @@ in
 
     # Screenshot de área selecionada para a área de transferência (SUPER+SHIFT+S)
     screenshotClipboard
+
+    # Histórico de clipboard estilo Win+V (SUPER+V)
+    clipboardPicker
   ];
 }
