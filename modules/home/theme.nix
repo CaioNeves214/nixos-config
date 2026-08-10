@@ -31,7 +31,17 @@ let
   # Recarrega os apps para aplicar cor/estilo novos. Usado pelos dois comandos.
   reloadApps = ''
     command -v hyprctl >/dev/null 2>&1 && hyprctl reload >/dev/null 2>&1 || true
-    pkill -SIGUSR2 waybar 2>/dev/null || true
+
+    # Nem todo perfil roda waybar (o 'nous' usa uma barra Quickshell própria e
+    # não tem dotfiles/profiles/nous/waybar/). Sobe/recarrega só quando o
+    # perfil ativo tem essa pasta; mata quando não tem, senão a waybar do
+    # perfil anterior continua rodando por cima da barra nova.
+    if [ -d "$HOME/.config/theme/active/waybar" ]; then
+      pgrep waybar >/dev/null 2>&1 || hyprctl dispatch exec waybar >/dev/null 2>&1 || true
+      pkill -SIGUSR2 waybar 2>/dev/null || true
+    else
+      pkill waybar 2>/dev/null || true
+    fi
     pkill -SIGUSR1 kitty  2>/dev/null || true
 
     # O Quickshell observa o inode resolvido do shell.qml; trocar para onde o

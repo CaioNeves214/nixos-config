@@ -20,6 +20,8 @@
       ../../modules/system/fan.nix
       ../../modules/system/udev.nix
       ../../modules/system/login.nix
+      ../../modules/system/storage.nix
+      ../../modules/system/power.nix
     ];
 
   # Bootloader.

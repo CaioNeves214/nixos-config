@@ -1,0 +1,95 @@
+/* Perfil "nous" — walker.
+   theme_base = ["default"] (ver config.toml) já traz o layout embutido do
+   walker; aqui só sobrescrevemos cor/raio/fonte. Cantos retos, um único
+   acento sólido no item selecionado (o gesto do .btn-primary do DESIGN.md),
+   grid de 3.5px — mesmo tratamento que nous/rofi/theme.rasi.
+
+   Caminho ABSOLUTO no import: este arquivo é carregado a partir de
+   ~/.config/theme/active/, então um @import relativo cairia dentro do repo
+   em vez do colors.css que o wallust escreve em ~/.config/walker/. */
+@import url("file:///home/caio/.config/walker/colors.css");
+
+* {
+  font-family: "IBM Plex Sans", "Symbols Nerd Font", sans-serif;
+  font-size: 11pt;
+}
+
+#window {
+  color: @text;
+}
+
+#box {
+  background: @base;
+  border: 1px solid;
+  border-color: @primary;
+  border-radius: 0;
+  padding: 14px;
+}
+
+#search {
+  background: transparent;
+  border-style: none none solid none;
+  border-width: 0 0 1px 0;
+  border-color: @secondary;
+  border-radius: 0;
+  padding: 0 0 10.5px 0;
+  margin-bottom: 10.5px;
+}
+
+#prompt {
+  color: @primary;
+  opacity: 1;
+  margin-right: 7px;
+}
+
+#clear {
+  color: @text;
+  opacity: 0.6;
+}
+
+#input {
+  color: @text;
+  font-family: "IBM Plex Mono", monospace;
+}
+
+#input placeholder {
+  color: @secondary;
+  opacity: 1;
+}
+
+#typeahead {
+  color: @secondary;
+}
+
+child {
+  border-radius: 0;
+  padding: 7px 10.5px;
+}
+
+/* Item selecionado: bloco sólido no acento, texto no canvas — sem
+   raio/sombra, igual ao element.selected.normal do rofi deste perfil. */
+child:selected,
+child:hover {
+  background: @primary;
+}
+
+child:selected #label,
+child:selected #sub,
+child:hover #label,
+child:hover #sub {
+  color: @base;
+}
+
+#icon {
+  margin-right: 10.5px;
+}
+
+#label {
+  color: @text;
+  font-weight: 500;
+}
+
+#sub {
+  color: @secondary;
+  font-size: 0.85em;
+}

@@ -1,0 +1,27 @@
+singleton Theme 1.0 Theme.qml
+singleton Sys 1.0 Sys.qml
+
+BarModule 1.0 BarModule.qml
+Workspaces 1.0 Workspaces.qml
+WindowTitle 1.0 WindowTitle.qml
+
+Hub 1.0 Hub.qml
+HubPanel 1.0 HubPanel.qml
+PanelMedia 1.0 PanelMedia.qml
+PanelCalendar 1.0 PanelCalendar.qml
+Visualizer 1.0 Visualizer.qml
+MediaButton 1.0 MediaButton.qml
+
+ModTray 1.0 ModTray.qml
+ModBacklight 1.0 ModBacklight.qml
+ModVolume 1.0 ModVolume.qml
+ModNetwork 1.0 ModNetwork.qml
+ModBluetooth 1.0 ModBluetooth.qml
+ModTemperature 1.0 ModTemperature.qml
+ModCpu 1.0 ModCpu.qml
+ModMemory 1.0 ModMemory.qml
+ModBattery 1.0 ModBattery.qml
+
+Bar 1.0 Bar.qml
+Osd 1.0 Osd.qml
+Notifications 1.0 Notifications.qml

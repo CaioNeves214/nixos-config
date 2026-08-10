@@ -42,9 +42,9 @@ serif + sans + mono de forma coerente:
 
 | Uso | Fonte |
 |---|---|
-| Terminal, waybar, números | IBM Plex Mono |
-| Rofi, textos de UI | IBM Plex Sans |
-| Título do card de mídia | IBM Plex Serif (peso Light — o *"weight 300 for headings"* do doc) |
+| Terminal, barra Quickshell, números | IBM Plex Mono |
+| Rofi, walker, textos de UI | IBM Plex Sans |
+| Título da página de mídia do hub | IBM Plex Serif (peso Light — o *"weight 300 for headings"* do doc) |
 | Glifos de ícone | Symbols Nerd Font (a IBM Plex não tem os ícones) |
 
 O `--font-mono` literal do site é Courier Prime; foi trocado por IBM Plex Mono por
@@ -59,33 +59,56 @@ sem querer.
 - **Grid de 3.5px** nos paddings internos (3.5 / 7 / 10.5 / 14).
 - **Blur desligado** no Hyprland: o doc quer superfícies escuras sólidas, não translucidez —
   e num Intel HD 4000 é orçamento de frame de graça.
+- **Kitty 100% opaco** (`background_opacity 1.0`), pela mesma razão: com qualquer valor
+  menor o wallpaper tinge o fundo e o terminal sai do `base` (`#07070F`) da `palette.toml`.
+  O perfil `default` usa 0.75 de propósito — lá a paleta *vem* do wallpaper.
 - **Borda de janela de 1px**: o foco é marcado por cor, não por espessura.
-- **Barra fechada**: margens zeradas, largura total, encostada no topo. O fundo mora na
-  superfície da janela (`window#waybar`), não em placas por grupo como no `default`.
+- **Barra fechada**: sem margens, largura total, encostada no topo. É uma superfície
+  Quickshell própria (`quickshell/ui/Bar.qml`), não waybar — o fundo mora na própria
+  `PanelWindow`, ponta a ponta, com um filete de 1px em `alpha(primary, 0.35)` na borda
+  inferior. Ver "Barra Quickshell" abaixo.
 
-### Constantes calibradas (não derivar no papel)
+### Walker (launcher, SUPER+D)
 
-O widget de mídia do Quickshell se ancora contra a zona exclusiva da waybar. **Estes números
-foram medidos na tela** e mudam se a geometria da barra mudar:
+`walker/config.toml` + `walker/themes/walker.css`. Mesmo gesto do
+`rofi/theme.rasi` deste perfil: raio 0 em tudo, borda 1px sólida em `@primary`,
+grid de 3.5px (`padding: 7px 10.5px` nos itens), item selecionado = bloco
+sólido `@primary` com texto `@base` (sem raio/sombra — o contraste é a única
+marcação). Fonte IBM Plex Sans nos rótulos, IBM Plex Mono no campo de busca.
+`theme_base = ["default"]` no config.toml herda o layout embutido do walker
+(caixa centralizada); só cor/raio/fonte são sobrescritos aqui.
 
-| Constante | Valor aqui | Como remedir |
-|---|---|---|
-| `margins.top` | `-42` | `hyprctl monitors -j` → `reserved` (array é `[left, top, right, bottom]`); a regra é `top = y_desejado - reserved.top`, aqui `0 - 42` |
-| `barOffset` | `13 + 40n` | `grim` + varredura de pixel: botão de workspace tem passo de 40px (fundo 36 + 2×2 de margem); o grupo termina em `12 + 40n` e o thumb entra 1px depois |
+### Barra Quickshell (substitui a waybar neste perfil)
 
-(No perfil `default` os mesmos valores são `-44` e `37 + 40n`, porque lá a barra flutua com
-margem de 8/12.)
+**Este perfil não usa waybar.** A barra é `dotfiles/profiles/nous/quickshell/ui/Bar.qml` —
+uma superfície layer-shell própria que reserva `exclusiveZone: Theme.barHeight` (42px) e nunca
+muda de tamanho (a altura reservada nasce já incluindo o hub expandido,
+`Theme.barHeight + Theme.panelZone`; só um `Item` clipado por dentro anima). Arquitetura
+completa, a regra da `mask` e o ponto de extensão do hub: **[`docs/quickshell-bar-nous.md`](../../../docs/quickshell-bar-nous.md)**.
 
-### Limitação conhecida: ícone e valor são um label só
+Isso **resolve** o wart antigo da waybar: cada módulo agora é dois `Text` independentes
+(`BarModule.qml`), então o ícone fica em `@primary` e o número em `alpha(@text, 0.85)` — algo
+impossível com o label GTK único da waybar (`"{icon} {value}"`, sem como colorir só uma
+metade). Exceções propositais à cor única continuam as mesmas: rede desconectada e bateria
+crítica em `@alert`, volume mudo apagado.
 
-Todos os módulos da waybar têm formato `"{icon} {value}"` num **único label GTK**, e CSS não
-colore parte de um label. Por isso o perfil pinta o módulo inteiro em `@primary` — o número
-vai junto com o ícone. Separar os dois exigiria markup Pango (`<span color=…>`) dentro de
-`dotfiles/wallust/templates/waybar-config.jsonc`, que é **compartilhado com o perfil
-`default`** e portanto o repintaria também.
+A antiga aritmética de âncora (`margins.top: -42`, `barOffset: 13 + 40n`) **deixou de
+existir** — o widget de mídia era uma segunda superfície colada contra a zona exclusiva da
+waybar; agora o hub mora dentro da própria superfície da barra, então não há nada a remedir
+com `grim` quando a geometria muda.
 
-Exceções propositais à cor única: rede desconectada e bateria crítica ficam em `@alert` (um
-aviso que continua azul deixa de ser aviso), e volume mudo fica apagado.
+**`Theme.panelZone` (460px) é o único número a revisar** ao adicionar uma página nova ao hub
+(`HubPanel.qml`) — precisa caber a soma máxima das páginas empilhadas (hoje: `PanelMedia` +
+`PanelCalendar`).
+
+**Wart observado, não deste código:** `theme-profile` religa a waybar via
+`hyprctl dispatch exec waybar` ao voltar para o perfil `default` (`modules/home/theme.nix`).
+Esse dispatch se mostrou intermitente em teste — falha a subir uma fração das vezes, sem erro
+visível, enquanto a mesma chamada para `quickshell` nunca falhou em dezenas de tentativas.
+Rodar `theme-profile default` de novo resolve. Não investigado a fundo (é um quirk do
+`hyprctl dispatch exec`, não do código deste perfil) — se voltar a incomodar, o próximo passo
+é comparar com `uwsm app --` ou checar se há contenção de systemd-oomd/cgroup no momento do
+dispatch.
 
 ### Onde o perfil NÃO chega
 

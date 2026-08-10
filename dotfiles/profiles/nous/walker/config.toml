@@ -1,0 +1,59 @@
+# Config do walker (launcher, SUPER+D). Ver docs/... não existe doc próprio
+# ainda — a referência é o config.default.toml embutido no binário v0.12.21
+# (https://github.com/abenz1267/walker/blob/v0.12.21/internal/config/config.default.toml),
+# aqui só sobrescrevemos o que muda.
+#
+# theme_base = ["default"] herda o layout embutido "default" (caixa
+# centralizada) — nosso themes/walker.css só sobrescreve cor/raio/fonte.
+theme = "walker"
+theme_base = ["default"]
+
+# Fecha se já estiver aberto (SUPER+D de novo = toggle, igual ao rofi).
+close_when_open = true
+
+# ── Arquivos e pastas ────────────────────────────────────────────────────
+# use_fd: usa `fd` (mais rápido, respeita .gitignore) em vez do walk interno.
+[builtins.finder]
+use_fd = true
+fd_flags = "--ignore-vcs --type f --type d"
+
+# ── Websearch: só os dois motores pedidos (Google fica em primeiro) ─────
+[builtins.websearch]
+
+[[builtins.websearch.entries]]
+name = "Google"
+url = "https://www.google.com/search?q=%TERM%"
+
+[[builtins.websearch.entries]]
+name = "DuckDuckGo"
+url = "https://duckduckgo.com/?q=%TERM%"
+
+# ── Providers fora do escopo pedido (apps/arquivos/calc/websearch/comandos) ─
+# hidden = true tira do resultado padrão e do menu do switcher ("/").
+# clipboard fica aqui porque já existe clipboard-picker (SUPER+V, cliphist).
+[builtins.ai]
+hidden = true
+
+[builtins.bookmarks]
+hidden = true
+
+[builtins.clipboard]
+hidden = true
+
+[builtins.dmenu]
+hidden = true
+
+[builtins.emojis]
+hidden = true
+
+[builtins.ssh]
+hidden = true
+
+[builtins.symbols]
+hidden = true
+
+[builtins.translation]
+hidden = true
+
+[builtins.windows]
+hidden = true

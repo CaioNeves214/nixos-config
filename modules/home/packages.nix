@@ -106,6 +106,24 @@ let
     fi
     $PACTL set-sink-volume @DEFAULT_SINK@ "''${target}%"
   '';
+
+  # walker é a primeira app GTK4 do rice (waybar/rofi são GTK3, pipeline de
+  # render diferente). O GSK (renderer de cena do GTK4) escolhe Vulkan por
+  # padrão, e no Intel HD 4000 (Ivy Bridge) desta máquina o Vulkan do GTK4
+  # desenha formas sólidas normalmente mas NUNCA desenha texto — sem erro,
+  # sem crash, só glifo nenhum (confirmado isolando com um #label
+  # `color: red; background: yellow` no CSS: o fundo amarelo aparecia, o
+  # texto vermelho não). `GSK_RENDERER=ngl` força o renderer OpenGL "novo"
+  # do GTK4 e resolve. Embrulha o binário (em vez de só setar no keybind)
+  # pra valer em qualquer invocação — direto no terminal também.
+  walker = pkgs.symlinkJoin {
+    name = "walker";
+    paths = [ pkgs.walker ];
+    nativeBuildInputs = [ pkgs.makeWrapper ];
+    postBuild = ''
+      wrapProgram $out/bin/walker --set GSK_RENDERER ngl
+    '';
+  };
 in
 
 {
@@ -114,10 +132,13 @@ in
     kitty # Terminal
     fastfetch # Fastfetch
     waybar # TaskBar
-    rofi # Launcher program
+    rofi # Launcher program (ainda usado pelo clipboard-picker, SUPER+V)
+    walker # Launcher estilo Raycast/Spotlight (SUPER+D): apps, arquivos, websearch, comandos
+    fd # Busca de arquivos/pastas usada pelo provider "finder" do walker
     hyprpaper # Wallpaper
     wallust # Gera paleta de cores a partir do wallpaper (design system)
     xfce.thunar # File Explorer
+    udiskie # Automount de pendrives/HDs externos ao conectar (tray icon + notificação)
     vscode # Editor de código (VSCode)
     mako # Notification daemon
     discord # Voice channel

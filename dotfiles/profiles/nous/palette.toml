@@ -34,7 +34,7 @@ text      = "#F5F5F5"
 # usar um único acento — resista a introduzir um segundo.
 primary   = "#0000F2"
 
-# Muted. CPU/memória/bateria na waybar, placeholders, texto secundário.
+# Muted. Loop "track" na barra Quickshell, placeholders, texto secundário.
 secondary = "#575380"
 
 # Crítico. Bateria baixa, rede caída, workspace urgente. (--red-500 do site.)
@@ -45,7 +45,8 @@ cursor    = "#0000F2"
 
 
 ## ── Paleta ANSI do terminal ───────────────────────────────────────────────
-## O kitty consome os 16 slots; o calendário da waybar usa color6 e color8.
+## O kitty consome os 16 slots; a barra Quickshell usa color3 (warning) e
+## color8 (surface) — ver dotfiles/wallust/templates/colors-quickshell.json.
 ##
 ## ATENÇÃO: color1/color2/color4 declarados aqui são IGNORADOS — os tokens
 ## acima são a autoridade sobre esses três slots (o script sobrescreve).

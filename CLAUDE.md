@@ -60,12 +60,14 @@ modules/
     audio.nix, bluetooth.nix, boot.nix, fan.nix, locale.nix
     networking.nix, packages.nix, users.nix, zsh.nix, udev.nix
     login.nix                    # SDDM (Qt6) + custom QML greeter theme
+    power.nix                    # services.upower.enable — battery state for Quickshell.Services.UPower
   home/                          # Home Manager modules imported by home/caio.nix
     dev.nix                      # Dev tools: nodejs_24, python311
     git.nix                      # Git identity
     hyprland.nix                 # Points ~/.config/hypr/hyprland.conf at the ACTIVE PROFILE
     kitty.nix                    # Points ~/.config/kitty/kitty.conf at the active profile
     rofi.nix                     # Points ~/.config/rofi/{config,theme}.rasi at the active profile
+    walker.nix                   # Points ~/.config/walker/{config.toml,themes/walker.css} at the active profile
     waybar.nix                   # Points ~/.config/waybar/style.css at the active profile
     quickshell.nix               # Points quickshell/{shell.qml,ui} at the active profile
     theme.nix                    # DESIGN SYSTEM: wallust wiring + update-theme / theme-profile / wallpaper-picker
@@ -78,25 +80,33 @@ dotfiles/
       hypr/hyprland.conf         #   Hyprland config (keybinds, animations, input); sources colors.conf
       kitty/kitty.conf           #   Kitty config; includes colors.conf (ABSOLUTE path)
       rofi/{config,theme}.rasi   #   Rofi launcher; theme.rasi imports colors.rasi (ABSOLUTE path)
+      walker/config.toml         #   Walker launcher (SUPER+D): providers (apps/files/websearch/calc/runner)
+      walker/themes/walker.css   #   Walker theme; imports walker/colors.css (ABSOLUTE path), theme_base=["default"]
       waybar/style.css           #   Waybar styling; @import colors.css (ABSOLUTE path)
       waybar/geometry.jsonc      #   Bar height/margins, included by the generated config.jsonc
       quickshell/shell.qml       #   Media widget: MPRIS drop-down under the waybar (layer-shell)
       quickshell/ui/             #   Local QML components (MediaButton.qml)
       gtk/popups.css             #   Overlay for the GTK popups (volume, wallpaper picker)
-    nous/                        #   Nous Portal look: sharp corners, fixed palette, IBM Plex
+    nous/                        #   Nous Portal look: sharp corners, fixed palette, IBM Plex.
+                                  #   NO WAYBAR — the whole bar is Quickshell (see docs/quickshell-bar-nous.md)
       DESIGN.md                  #   ← the spec AND the implementation notes for this profile
       palette.toml               #   THE fixed palette — the only file to edit to recolor this profile
-      ... same tree as default/
+      hypr/, kitty/, rofi/, walker/, gtk/  # same tree/roles as default/
+      quickshell/shell.qml       #   composes Bar {} + Notifications {} + Osd {} — see ui/
+      quickshell/ui/             #   Theme.qml + Sys.qml (singletons), Bar.qml, Hub.qml/HubPanel.qml/
+                                  #   PanelMedia.qml/PanelCalendar.qml, Mod*.qml (status modules),
+                                  #   Notifications.qml, Osd.qml, Workspaces.qml, WindowTitle.qml
   sddm/theme/                    # Login screen: Main.qml + theme.conf + metadata.desktop (shared)
   waybar/scripts/volume-popup.py # GTK3 volume popup; reads tokens from rofi/colors.rasi (shared)
   scripts/wallpaper-picker.py    # GTK3 theme/wallpaper picker window (SUPER+W) (shared)
   scripts/palette-to-wallust.py  # palette.toml (semantic) -> wallust colorscheme JSON (19 keys)
   wallust/wallust.toml           # Design system config: palette extraction + template targets (shared)
-  wallust/templates/             # colors-{hypr,kitty,rofi,waybar,quickshell} + waybar-config.jsonc (shared)
+  wallust/templates/             # colors-{hypr,kitty,rofi,walker,waybar,quickshell} + waybar-config.jsonc (shared)
   wallpapers/                    # Wallpaper images (symlinked to ~/.config/wallpapers)
 mcp_server/                      # Python nix-ricing MCP server (see docs/ and MCP section below)
 docs/
-  media-widget.md                # Quickshell media widget: full design + gotchas (per-profile QML)
+  media-widget.md                # Quickshell media widget: full design + gotchas (default profile)
+  quickshell-bar-nous.md         # nous profile's Quickshell bar: architecture, mask, hub, Sys.qml fallbacks
   MCP_SETUP.md, mcp_server.md    # nix-ricing MCP server setup and reference
   MCP_REFACTOR.md, RICING_SERVER_SUMMARY.md
 ```
@@ -114,9 +124,15 @@ For the per-profile files there is **one extra hop**: the Home Manager symlink p
 
 ## Perfis visuais (theme profiles)
 
-A **profile** is a complete, self-contained look: Hyprland decoration, waybar CSS + geometry,
-kitty, rofi, and the Quickshell media widget. Switch with **`theme-profile <name>`** — live, no
-rebuild; run it with no argument to see the current one and list the others.
+A **profile** is a complete, self-contained look: Hyprland decoration, kitty, rofi, walker, and
+the bar/media layer. Switch with **`theme-profile <name>`** — live, no rebuild; run it with no
+argument to see the current one and list the others.
+
+> **`nous` has no waybar at all** — its bar is a standalone Quickshell app
+> (`dotfiles/profiles/nous/quickshell/`, see `docs/quickshell-bar-nous.md`), not a waybar
+> module plus a separate media widget like `default`. `theme-profile`'s `reloadApps` is
+> profile-aware because of this: it only starts/reloads waybar when the active profile has a
+> `waybar/` directory, and kills it otherwise (`modules/home/theme.nix`).
 
 > **Each profile documents its own look in `dotfiles/profiles/<name>/DESIGN.md`** — palette,
 > fonts, radii, the constants that were calibrated on screen, and its known warts. **Read that
@@ -147,17 +163,22 @@ directly. That is not a style choice — it is load-bearing:
    relative `include`/`@import` resolves into the *repo*, not into `~/.config/` where wallust writes.
    The one deliberate exception is rofi's `@theme "theme.rasi"`, which *should* stay relative so each
    profile picks up its own theme.
-2. **The waybar layout is shared; only geometry is per-profile.** `wallust/templates/waybar-config.jsonc`
-   is common to all profiles and pulls `active/waybar/geometry.jsonc` via waybar's `include`. Since
-   waybar resolves duplicates with *"the first defined value takes precedence"* (`man 5 waybar`), the
-   main template **must not** redeclare `height`/`margin-*` — it would win and the profile would be
-   silently ignored. Anything else edited there repaints **every** profile.
+2. **The waybar layout is shared; only geometry is per-profile — for profiles that have a
+   `waybar/` directory.** `wallust/templates/waybar-config.jsonc` is common to every waybar-based
+   profile and pulls `active/waybar/geometry.jsonc` via waybar's `include`. Since waybar resolves
+   duplicates with *"the first defined value takes precedence"* (`man 5 waybar`), the main template
+   **must not** redeclare `height`/`margin-*` — it would win and the profile would be silently
+   ignored. Anything else edited there repaints **every** waybar-based profile. `nous` has no
+   `waybar/` directory and is unaffected by this file entirely.
 3. **Quickshell does not hot-reload on a profile switch.** Its watch is on the *resolved inode*, and
    flipping `active` emits no inotify event, so `theme-profile` kills and respawns it. (Same reason
    `colors.json` *does* hot-reload: wallust performs a real write.)
-4. **Changing bar geometry means re-measuring the media widget.** `shell.qml` anchors against the
-   waybar's exclusive zone with `margins.top` and `barOffset` — both measured on screen, per-profile,
-   never derived on paper. The values and the procedure live in each profile's `DESIGN.md`.
+4. **In `default`, changing bar geometry means re-measuring the media widget.** `shell.qml` anchors
+   against the waybar's exclusive zone with `margins.top` and `barOffset` — both measured on screen,
+   never derived on paper (procedure in `profiles/default/DESIGN.md`). **This does not apply to
+   `nous`** — its bar reserves its own `exclusiveZone` and the hub panel positions off the bar's own
+   geometry (`Theme.barHeight`/`Theme.panelWidth` in `quickshell/ui/Theme.qml`), so there is no
+   cross-app anchor arithmetic to remeasure at all.
 
 **Color: two ways to get a palette.** If a profile contains a `palette.toml`, it has a **fixed**
 palette: `theme-profile` converts it with `dotfiles/scripts/palette-to-wallust.py` into
@@ -174,7 +195,7 @@ Colors are **not hardcoded per app** — they are derived from the current wallp
 
 **Flow:** `update-theme <img>` → sets wallpaper (hyprpaper) → `wallust run` extracts the palette and renders each `dotfiles/wallust/templates/colors-*` into a per-app include → reloads the apps live.
 
-**Rendered includes and how each app consumes them** (all live in `~/.config/`, generated — never edit by hand):
+**Rendered includes and how each app consumes them** (all live in `~/.config/`, generated — never edit by hand). The Waybar rows only apply to waybar-based profiles (`default`); `nous` has no waybar and reads `quickshell/colors.json` directly for its whole bar, not just a media widget:
 
 | App     | Generated file          | Consumed via                                   |
 |---------|-------------------------|------------------------------------------------|
@@ -182,6 +203,7 @@ Colors are **not hardcoded per app** — they are derived from the current wallp
 | Kitty   | `kitty/colors.conf`     | `include /home/caio/.config/kitty/colors.conf` (absolute — see "Perfis visuais") |
 | Waybar  | `waybar/colors.css`     | `@import url("file:///home/caio/.config/waybar/colors.css")` in `style.css` |
 | Rofi    | `rofi/colors.rasi`      | `@import "/home/caio/.config/rofi/colors.rasi"` in `theme.rasi` |
+| Walker  | `walker/colors.css`     | `@import url("file:///home/caio/.config/walker/colors.css")` in `themes/walker.css` |
 | Waybar  | `waybar/config.jsonc`   | whole layout, generated (see below)             |
 | Quickshell | `quickshell/colors.json` | `FileView` (`watchChanges: true`) in `shell.qml` |
 
@@ -189,7 +211,7 @@ Colors are **not hardcoded per app** — they are derived from the current wallp
 - **Waybar `config.jsonc`** — the calendar tooltip uses inline Pango markup (`<span color=…>`) which has no import mechanism, so the **entire config is a wallust template** (`wallust/templates/waybar-config.jsonc`). Edit *layout* there, not in `~/.config`. `waybar.nix` intentionally does **not** symlink `config.jsonc`.
 - **GTK popups** (`volume-popup.py`) — read the generated `rofi/colors.rasi` at runtime via a small `load_colors()` regex and build their CSS from the tokens (fallback palette only if the file is missing). `wallpaper-picker.py` uses the same pattern; keep their fallbacks in sync.
 - **SDDM greeter** (`dotfiles/sddm/theme/Main.qml`) — the greeter runs as the `sddm` user and cannot read `/home/caio`, so `update-theme` publishes its assets to **`/var/lib/sddm-theme/`** (see "Login screen" below).
-- **Quickshell** (`dotfiles/profiles/<name>/quickshell/shell.qml`) — reads `~/.config/quickshell/colors.json` (template `colors-quickshell.json`) via `FileView` with `watchChanges: true`, so the media card re-themes live on every `update-theme`, with a fallback palette embedded in the QML for a fresh checkout. `quickshell.nix` symlinks `shell.qml` and `ui/` **individually, not the directory** — a directory symlink would make wallust write `colors.json` into the repo working tree (it used to, and the file ended up tracked in git).
+- **Quickshell** (`dotfiles/profiles/<name>/quickshell/shell.qml`) — reads `~/.config/quickshell/colors.json` (template `colors-quickshell.json`, 8 tokens: the 6 original plus `warning`/`surface` added for `nous`) via `FileView` with `watchChanges: true`, with a fallback palette embedded in QML for a fresh checkout. In `default` this re-themes the media card; in `nous` the same `FileView` pattern lives in `quickshell/ui/Theme.qml` (a singleton) and re-themes the *entire bar* live on every `update-theme`. `quickshell.nix` symlinks `shell.qml` and `ui/` **individually, not the directory** — a directory symlink would make wallust write `colors.json` into the repo working tree (it used to, and the file ended up tracked in git).
 
 **Bootstrap:** the generated files (`colors.*`, `waybar/config.jsonc`) are gitignored and do not exist on a fresh checkout — run `update-theme <wallpaper>` once after the first `nixos-rebuild switch` or Waybar/colors won't be present. The `~/.config/theme/active` symlink is created automatically by a `home.activation` hook in `theme.nix` (pointing at `default`) if it is missing, so nothing dangles on a fresh checkout.
 
@@ -201,10 +223,10 @@ Colors are **not hardcoded per app** — they are derived from the current wallp
 
 **GTK3 Python popups** (`wallpaper-picker`, `volume-popup`) need `GI_TYPELIB_PATH` wired with the `.out` outputs of glib/pango plus `at-spi2-core` and `harfbuzz` — see the `giTypelibs`/`pickerTypelibs` lets in `packages.nix` and `theme.nix` before adding another PyGObject script.
 
-## Media widget (Quickshell)
+## Media widget (Quickshell) — `default` profile
 
 The now-playing control in the waybar's row is a separate **Quickshell layer-shell app**, not a
-waybar module: `dotfiles/profiles/<name>/quickshell/shell.qml` (per-profile), symlinked live by
+waybar module: `dotfiles/profiles/default/quickshell/shell.qml`, symlinked live by
 `modules/home/quickshell.nix` and started by `exec-once = quickshell`. It reads MPRIS and
 Pipewire natively — no polling scripts.
 
@@ -216,9 +238,13 @@ Pipewire natively — no polling scripts.
 > and the known pitfalls.
 
 Two things worth knowing without opening either: the widget's `margins.top` / `margins.left`
-are **measured on screen and per-profile** (values in each profile's `DESIGN.md`), and it does
-**not** hot-reload on a profile switch — `theme-profile` kills and respawns it, because its
-watch is on the resolved inode and flipping the `active` symlink emits no inotify event.
+are **measured on screen** (values in `profiles/default/DESIGN.md`), and it does **not**
+hot-reload on a profile switch — `theme-profile` kills and respawns it, because its watch is on
+the resolved inode and flipping the `active` symlink emits no inotify event.
+
+**`nous` does not have this widget** — it doesn't run waybar at all, so there's nothing to drop
+a media card under. Its media page lives inside the bar's own hub panel instead. See
+[`docs/quickshell-bar-nous.md`](docs/quickshell-bar-nous.md).
 
 ## Login screen (SDDM + custom QML theme)
 
@@ -242,10 +268,14 @@ Things that are easy to get wrong here:
 - `home-manager` runs as a NixOS module (`home-manager.nixosModules.home-manager`), so `nixos-rebuild switch` rebuilds both system and home simultaneously.
 - `nix-ld` is enabled with a broad set of dynamic libraries to support pre-built binaries (e.g., Electron apps, VS Code extensions).
 - Fan control uses `mbpfan` tuned for MacBook Pro thermals (`modules/system/fan.nix`).
-- Waybar refreshes instantly on AC plug/unplug via a `services.udev.extraRules` rule (`modules/system/udev.nix`) that sends `SIGUSR2` (waybar's default "reload" signal) on any `power_supply` subsystem `change` event. Purely event-driven — no polling service. Note: waybar's `"signal"` module option only applies to `custom/*` modules, not built-ins like `battery`, so a full-bar `SIGUSR2` reload is used instead of a targeted module refresh.
+- Waybar refreshes instantly on AC plug/unplug via a `services.udev.extraRules` rule (`modules/system/udev.nix`) that sends `SIGUSR2` (waybar's default "reload" signal) on any `power_supply` subsystem `change` event. Purely event-driven — no polling service. Note: waybar's `"signal"` module option only applies to `custom/*` modules, not built-ins like `battery`, so a full-bar `SIGUSR2` reload is used instead of a targeted module refresh. This rule only matters for waybar-based profiles; `nous`'s battery module reads `Quickshell.Services.UPower` directly and reacts on its own, no udev involved.
+- `services.upower.enable` (`modules/system/power.nix`) backs `Quickshell.Services.UPower`, used by `nous`'s battery module. Without it the service returns `0%`/`Unknown` **silently, with no error**.
+- `theme-profile`'s `reloadApps` (`modules/home/theme.nix`) starts/stops waybar based on whether the newly-active profile has a `waybar/` directory. Observed in testing: `hyprctl dispatch exec waybar` is intermittently flaky when reclaiming waybar for `default` after being on `nous` — the dispatch returns fine but the process doesn't always end up running; re-running `theme-profile default` resolves it. The equivalent respawn for `quickshell` has never failed the same way across dozens of tests. Not root-caused (see `profiles/nous/DESIGN.md` § "Barra Quickshell").
 - `nixpkgs.config.allowUnfree = true` is set globally, so unfree packages (discord, etc.) can be added without per-package overrides.
 - `nix-command` and `flakes` experimental features are enabled in `nix.settings`.
 - The onboard audio codec is a Cirrus Logic CS4206, which needs `options snd-hda-intel model=mbp101` (`modules/system/audio.nix`, via `boot.extraModprobeConfig`) or the kernel's generic HDA autoparser produces thin/tinny speaker output. Even with that quirk the small 2012 speakers are physically bass-light, so `modules/home/easyeffects.nix` adds a PipeWire EQ + bass-enhancer preset (`depth-boost`, auto-loaded) to compensate in software; it requires `programs.dconf.enable = true` (set alongside the quirk in `audio.nix`) for the EasyEffects daemon to run.
+- **GTK4 apps need `GSK_RENDERER=ngl`, not the default Vulkan renderer, on this Intel HD 4000 (Ivy Bridge).** Discovered via `walker` (the first GTK4 app in this rice — waybar/rofi/thunar are all GTK3, a different render pipeline): with GSK's default Vulkan backend, solid-color CSS backgrounds render fine but **text never draws at all** — no error, no crash, just zero glyphs (isolated by setting `#label { color: red; background: yellow; }`: the yellow showed, the red text didn't). `modules/home/packages.nix` wraps `pkgs.walker` with `pkgs.symlinkJoin` + `makeWrapper` to force `GSK_RENDERER=ngl` on the binary itself (not just the keybind), so it applies to every invocation. Any future GTK4 package added to this flake will likely need the same wrapper.
+- **USB storage automount** is split across the system/home boundary like everything else DBus-backed here: `modules/system/storage.nix` enables `services.udisks2` (the DBus backend that actually performs mounts and needs root privileges to talk to the kernel), and `udiskie` (the user-side automount daemon + tray icon) is a plain package in `modules/home/packages.nix`, started per-profile via `exec-once = udiskie --tray` in each `dotfiles/profiles/<name>/hypr/hyprland.conf` — the same autostart pattern as waybar/hyprpaper/quickshell, not a Home Manager `services.udiskie` systemd unit, since nothing here starts `graphical-session.target` for HM's user services to hook into.
 
 ## MCP Server Integration
 

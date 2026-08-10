@@ -4,5 +4,7 @@
     "primary": "{{color4}}",
     "secondary": "{{color2}}",
     "alert": "{{color1}}",
-    "text": "{{foreground}}"
+    "text": "{{foreground}}",
+    "warning": "{{color3}}",
+    "surface": "{{color8}}"
 }

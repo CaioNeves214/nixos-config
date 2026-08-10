@@ -1,0 +1,81 @@
+/* Perfil "default" — walker.
+   theme_base = ["default"] (ver config.toml) já traz o layout embutido do
+   walker (caixa centralizada); aqui só sobrescrevemos cor/raio/fonte, no
+   mesmo espírito do resto do perfil (raio generoso, placas em alpha(@base)).
+
+   Caminho ABSOLUTO no import: este arquivo é carregado a partir de
+   ~/.config/theme/active/, então um @import relativo cairia dentro do repo
+   em vez do colors.css que o wallust escreve em ~/.config/walker/. */
+@import url("file:///home/caio/.config/walker/colors.css");
+
+* {
+  font-family: "JetBrainsMono Nerd Font", "Symbols Nerd Font", monospace;
+  font-size: 13px;
+}
+
+#window {
+  color: @text;
+}
+
+#box {
+  background: alpha(@base, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 10px;
+  padding: 16px;
+  box-shadow:
+    0 4px 24px rgba(0, 0, 0, 0.35);
+}
+
+#search {
+  background: alpha(@text, 0.06);
+  border-radius: 6px;
+  padding: 8px 10px;
+}
+
+#prompt {
+  color: @primary;
+  opacity: 0.6;
+}
+
+#clear {
+  color: @text;
+  opacity: 0.5;
+}
+
+#input {
+  color: @text;
+}
+
+#input placeholder {
+  color: @secondary;
+  opacity: 1;
+}
+
+#typeahead {
+  color: alpha(@text, 0.4);
+}
+
+child {
+  border-radius: 6px;
+  padding: 8px 10px;
+}
+
+child:selected,
+child:hover {
+  background: alpha(@primary, 0.18);
+}
+
+#icon {
+  margin-right: 8px;
+}
+
+#label {
+  color: @text;
+  font-weight: 500;
+}
+
+#sub {
+  color: @text;
+  opacity: 0.5;
+  font-size: 0.85em;
+}

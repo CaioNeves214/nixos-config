@@ -1,5 +1,12 @@
 # Media widget (Quickshell)
 
+> **`nous` migrated off this design.** In that profile the media card is now a page inside
+> the bar's own hub panel (`dotfiles/profiles/nous/quickshell/ui/Hub.qml` +
+> `HubPanel.qml`/`PanelMedia.qml`) — the whole bar is Quickshell, not just this widget, so
+> there's no separate surface anchoring against a waybar exclusive zone anymore. See
+> `docs/quickshell-bar-nous.md`. This document still describes the `default` profile's widget
+> as implemented, and the anchor-math/gotchas here are still the reference for `default`.
+
 The now-playing control that sits in the waybar's row and drops a card down on hover.
 
 **Source:** `dotfiles/profiles/<name>/quickshell/shell.qml` + `quickshell/ui/MediaButton.qml`

@@ -75,16 +75,35 @@ FileView {
 
 Isso é o que faz o widget **re-tematizar ao vivo** a cada `update-theme`, sem restart.
 
-### Coerência visual com a waybar
+### Coerência visual com a waybar (perfil `default`)
 
-Valores extraídos de `dotfiles/waybar/style.css` — respeite-os para os widgets lerem como
-parte da mesma barra:
+Valores extraídos de `dotfiles/profiles/default/waybar/style.css` (caminho atual — o layout
+por perfil vive em `dotfiles/profiles/<name>/`, não em `dotfiles/waybar/` direto) — respeite-os
+para os widgets lerem como parte da mesma barra:
 
 - Fonte: `"JetBrainsMono Nerd Font"`, fallback `"Symbols Nerd Font"`; base **13px**
 - Raios: **16px** pill externo · **12px** módulo · **10px** botão · **14px** tooltip/card
 - Padding típico: `4px 8px`; margem entre módulos: `2px`
 - Opacidade dos pills: **0.88** sobre o background (é o `alpha(@base, 0.88)` do CSS)
 - Cards flutuantes: opacidade **0.94**, raio 14, borda `Qt.alpha(primary, 0.25)`
+
+### Perfil `nous`: a barra inteira é Quickshell, não só um widget
+
+O perfil `nous` não roda waybar — `dotfiles/profiles/nous/quickshell/` é a barra completa
+(workspaces, hub central, módulos de status, tray, notificações, OSD), não um widget avulso.
+Arquitetura completa: [`docs/quickshell-bar-nous.md`](../../../docs/quickshell-bar-nous.md).
+Métricas extraídas de `dotfiles/profiles/nous/waybar/style.css` **antes de ser removido**
+(preservadas em `quickshell/ui/Theme.qml`), para não recalibrar de novo:
+
+- Fonte: `"IBM Plex Mono"`, fallback `"Symbols Nerd Font"`; base **13.5px**; clock **14px/Medium**
+- Raio **0 em tudo** — "o gesto central do perfil", nada de pill/raio como no `default`
+- Grid de **3.5px** (paddings `3.5 / 7 / 10.5 / 14`); módulo de status `3.5px 10.5px`
+- `minWidth` dos módulos de status: **52px** (impede a barra de "pular" ao trocar de estado)
+- Régua entre módulos: 1px em `alpha(text, 0.08)`; filete inferior da barra: 1px em
+  `alpha(primary, 0.35)`
+- Hover: `alpha(primary, 0.14)`, texto vira `text`
+- Durações: `animFast: 160`, `animNormal: 200` (perfil é "precise, technical", mais seco que o
+  220/280 do `default`)
 
 ### Arquitetura recomendada quando surgir o 2º widget
 
@@ -128,21 +147,35 @@ desta máquina:
 | Serviço QML | Daemon | Estado aqui |
 |---|---|---|
 | `Pipewire` | pipewire (user) | ✅ ativo |
-| `Bluetooth` | bluez | ✅ ativo |
-| `Networking` | NetworkManager | ✅ ativo (`modules/system/networking.nix`) |
+| `Bluetooth` | bluez | ⚠️ daemon ativo, mas ver nota abaixo |
+| `Networking` | NetworkManager | ⚠️ daemon ativo, mas ver nota abaixo |
 | `Polkit` | polkit | ✅ ativo (`configuration.nix:126`) |
 | `Hyprland` | socket do compositor | ✅ nativo |
 | `Mpris` | por aplicação | ✅ |
-| `Notifications` | o próprio Quickshell vira o daemon | ⚠️ conflita se já houver outro |
-| **`UPower`** | upower | ❌ **não instalado** |
+| `Notifications` | o próprio Quickshell vira o daemon | ⚠️ conflita se já houver outro (mako instalado, ver abaixo) |
+| **`UPower`** | upower | ✅ ativo (`modules/system/power.nix`, desde a migração do perfil `nous` para barra Quickshell) |
 
-**`UPower` não funciona neste host.** Um widget de bateria em Quickshell mostraria `0%` /
-`Unknown` silenciosamente. Confirmado: `Could not launch service org.freedesktop.UPower`. A
-waybar mostra bateria hoje porque lê `/sys/class/power_supply` direto, sem UPower.
+**`Quickshell.Networking` e `Quickshell.Bluetooth` existem no build (0.3.0, nixpkgs) mas
+ficaram permanentemente vazios em teste isolado neste host** — `Networking.devices.values.length
+=== 0` e `Bluetooth.adapters.values.length === 0` o tempo todo, apesar de NetworkManager e bluez
+rodando e com dispositivos reais conectados (confirmado fora do Quickshell via
+`busctl`/`nmcli`/`bluetoothctl`). Não é sobre o daemon estar ou não ativo — é o binding do
+Quickshell contra esse backend específico que não popula neste sistema. **Não assuma que os
+dois tipos funcionam sem testar isolado primeiro** (`qs -p` + `console.warn` nos valores, ver
+`dotfiles/profiles/nous/quickshell/ui/Sys.qml` para o teste que expôs isto). O fallback usado no
+perfil `nous` é `Process` com `nmcli -g ...`/`bluetoothctl`, documentado em
+`docs/quickshell-bar-nous.md`.
 
-Para usar: adicionar `services.upower.enable = true;` (opção validada contra o nixpkgs deste
-flake) e rodar `nixos-rebuild switch`. Alternativa sem rebuild: ler `/sys` por `Process` — mas
-aí se perde o `timeToEmpty`/`healthPercentage`, que só o UPower calcula.
+`UPower` **funciona neste host** desde que `services.upower.enable = true;` (opção validada
+contra o nixpkgs deste flake) — sem ele o widget de bateria mostraria `0%`/`Unknown` em
+silêncio (era o caso antes da migração do `nous`; `Could not launch service
+org.freedesktop.UPower` no log). A waybar nunca precisou disso: lê `/sys/class/power_supply`
+direto.
+
+**Notificações:** este host tem `mako` instalado (`modules/home/packages.nix`) — se estiver
+rodando, ele registra `org.freedesktop.Notifications` e um `NotificationServer` do Quickshell
+não consegue registrar o mesmo nome (ver próximo parágrafo). Nada o inicia automaticamente
+(sem `exec-once`), mas confira antes de assumir que seu `NotificationServer` está quebrado.
 
 `NotificationServer` só registra em `org.freedesktop.Notifications` se **nenhum outro daemon**
 estiver registrado. Ele reclama e tenta de novo quando o outro sair — verifique antes de

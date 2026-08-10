@@ -73,6 +73,16 @@ tela**, mudam se a geometria da barra mudar:
 (No perfil `nous` os mesmos valores são `-42` e `13 + 40n`, porque lá a barra é fechada e
 encostada no topo.)
 
+## Walker (launcher, SUPER+D)
+
+`walker/config.toml` + `walker/themes/walker.css`. `theme_base = ["default"]` no
+config.toml herda o layout embutido do walker (caixa centralizada); o CSS deste
+perfil só sobrescreve cor/raio/fonte: `#box` em `alpha(@base, 0.92)` com raio 10px
+(mesmo raio da janela do rofi), borda branca a 7% e sombra `0 4px 24px` (igual às
+placas da waybar), itens com raio 6px e seleção em `alpha(@primary, 0.18)`. Fonte
+JetBrainsMono Nerd Font, igual ao resto do perfil. Cores vêm de
+`walker/colors.css` (novo template wallust `colors-walker.css`, mesmos 5 tokens).
+
 ## Verrugas conhecidas
 
 - **Bateria usa cores literais de CSS** (`lightgreen`, `gold`, `lightcoral`, `lime`) em
