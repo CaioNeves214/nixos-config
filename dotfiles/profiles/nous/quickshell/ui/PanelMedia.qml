@@ -190,7 +190,7 @@ ColumnLayout {
 
         MediaButton {
             visible: root.player?.shuffleSupported ?? false
-            glyph: ""
+            glyph: "󰒝"
             glyphSize: 13
             tint: (root.player?.shuffle ?? false) ? Theme.cPrimary : Qt.alpha(Theme.cText, 0.45)
             onActivated: {
@@ -205,20 +205,20 @@ ColumnLayout {
         }
 
         MediaButton {
-            glyph: ""
+            glyph: "󰒮"
             tint: Theme.cPrimary
             active: root.player?.canGoPrevious ?? false
             onActivated: root.player?.previous()
         }
         MediaButton {
-            glyph: (root.player?.isPlaying ?? false) ? "" : ""
+            glyph: (root.player?.isPlaying ?? false) ? "󰏤" : "󰐊"
             glyphSize: 20
             tint: Theme.cPrimary
             active: root.player?.canTogglePlaying ?? false
             onActivated: root.player?.togglePlaying()
         }
         MediaButton {
-            glyph: ""
+            glyph: "󰒭"
             tint: Theme.cPrimary
             active: root.player?.canGoNext ?? false
             onActivated: root.player?.next()
@@ -232,7 +232,7 @@ ColumnLayout {
         // primary = playlist, secondary = faixa.
         MediaButton {
             visible: root.player?.loopSupported ?? false
-            glyph: ""
+            glyph: "󰑖"
             glyphSize: 13
             tint: {
                 const p = root.player;
