@@ -17,8 +17,14 @@ RowLayout {
     property var hostWindow: null // ver comentário em Bar.qml / ModVolume.qml
     property var menuTarget: null
 
+    // blueman: redundante — ModBluetooth.qml já mostra estado/ligar-desligar do adaptador.
+    // udiskie: fora por preferência do usuário (era também o ícone que ficava quebrado —
+    // drive-removable-media só existe no tema Adwaita, não registrado no sistema).
+    readonly property var hiddenTrayIds: ["blueman", "udiskie"]
+    readonly property var visibleItems: SystemTray.items.values.filter(it => root.hiddenTrayIds.indexOf(it.id) === -1)
+
     Repeater {
-        model: SystemTray.items
+        model: root.visibleItems
         delegate: Item {
             id: entry
             required property var modelData
@@ -37,8 +43,13 @@ RowLayout {
                 anchors.centerIn: parent
                 implicitSize: 16
                 asynchronous: true
-                source: Quickshell.iconPath(entry.modelData.icon, "application-x-executable")
                 opacity: entry.modelData.status === Status.Passive ? 0.5 : 1
+
+                // `SystemTrayItem.icon` já vem como URL `image://icon/...` PRONTA nesta versão
+                // do Quickshell — não é um nome de tema cru. Passá-la por
+                // `Quickshell.iconPath(nome, fallback)` prefixa a URL de novo (inválida, falha
+                // sempre); use o valor direto, como em `patterns.md` #7.
+                source: entry.modelData.icon
             }
 
             HoverHandler {
@@ -47,8 +58,10 @@ RowLayout {
 
             TapHandler {
                 acceptedButtons: Qt.LeftButton | Qt.RightButton
-                onTapped: eventPoint => {
-                    if (eventPoint.event.button === Qt.RightButton && entry.modelData.hasMenu) {
+                // tapped(eventPoint, button) — button é o SEGUNDO parâmetro do sinal, não
+                // eventPoint.event.button (isso não existe; TypeError confirmado ao vivo).
+                onTapped: (eventPoint, button) => {
+                    if (button === Qt.RightButton && entry.modelData.hasMenu) {
                         root.menuTarget = entry.modelData.menu;
                         trayMenu.visible = true;
                     } else {

@@ -220,6 +220,25 @@ text: root.player?.trackTitle ?? ""
 `hasPlayer` continua existindo, mas só para alternar `visible`/altura (nunca para acessar
 `.algumaCoisa` de dentro do player).
 
+## System tray (`ModTray.qml`)
+
+**`SystemTrayItem.icon` já vem como URL `image://icon/...` pronta nesta versão do
+Quickshell — não é um nome de tema cru.** Passá-la por `Quickshell.iconPath(nome, fallback)`
+(o padrão certo para um nome de tema cru, gotchas §12) prefixa a URL de novo — inválida,
+falha sempre. Use o valor **direto**: `source: entry.modelData.icon`, como `patterns.md` #7
+já mostrava.
+
+**`TapHandler.tapped` no Qt6 tem dois parâmetros do sinal — `button` não é
+`eventPoint.event.button`.** `tapped(eventPoint, button)`, confirmado no `.qmltypes` instalado
+(`QtQuick/plugins.qmltypes`). Escrever `onTapped: eventPoint => eventPoint.event.button` lê uma
+propriedade que não existe e gera `TypeError` a cada clique — erro de binding não derruba o
+app (gotchas §14), então passa despercebido até alguém clicar num ícone da tray e olhar o log.
+Certo: `onTapped: (eventPoint, button) => { if (button === Qt.RightButton) ... }`.
+
+**`hiddenTrayIds`** filtra `blueman` (redundante — `ModBluetooth.qml` já cobre o adaptador) e
+`udiskie` (fora por preferência do usuário) do `Repeater`. Acrescentar outro `id` à lista
+tira o ícone dele da barra sem mexer no resto do módulo.
+
 ## Notificações e OSD
 
 **`Notifications.qml`** — `NotificationServer { keepOnReload: true }`, com

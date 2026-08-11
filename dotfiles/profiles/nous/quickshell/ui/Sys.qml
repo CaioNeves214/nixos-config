@@ -157,6 +157,26 @@ Singleton {
         }
     }
 
+    // /sys não emite nenhum sinal de mudança que o Quickshell possa assinar (diferente do
+    // Pipewire, que empurra onVolumeChanged nativamente) — sem isto, ModBacklight/Osd só
+    // veriam o brilho novo no próximo tick do Timer de 2s, um atraso perceptível e visto ao
+    // vivo (o usuário reportou ~5s de "lentidão" comparado ao volume, que é instantâneo).
+    // `refreshBacklight()` força a releitura na hora; quem MUDA o brilho (o scroll do
+    // ModBacklight, e o `qs ipc call backlight refresh` encadeado nos binds do
+    // hyprland.conf) chama isto logo em seguida, e o dado fica tão reativo quanto o volume.
+    function refreshBacklight() {
+        if (root.backlightAvailable)
+            backlightFile.reload();
+    }
+
+    IpcHandler {
+        target: "backlight"
+
+        function refresh(): void {
+            root.refreshBacklight();
+        }
+    }
+
     // ── Rede e Bluetooth (fallback via nmcli/bluetoothctl) ────────────────
     // A verificação antecipada do plano (passo 2) mandava confirmar que
     // Quickshell.Networking e Quickshell.Bluetooth funcionam NESTE build
