@@ -9,11 +9,11 @@
 
   programs.home-manager.enable = true;
 
-  # Cursor padrão do Linux (Adwaita: preto com borda branca)
+  # Cursor Bibata (padrão em rices Linux/Hyprland)
   home.pointerCursor = {
     gtk.enable = true;
-    package = pkgs.adwaita-icon-theme;
-    name = "Adwaita";
+    package = pkgs.bibata-cursors;
+    name = "Bibata-Modern-Classic";
     size = 24;
   };
 
