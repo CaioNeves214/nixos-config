@@ -1,6 +1,6 @@
 ---
 name: quickshell
-description: Criar, editar e depurar widgets Quickshell (QML/QtQuick layer-shell) neste rice NixOS+Hyprland. Use ao mexer em dotfiles/quickshell/, ao criar qualquer widget de desktop novo (mídia, volume, bateria, workspaces, notificações, tray, OSD, lock screen), ao migrar um módulo da waybar para Quickshell, ou ao responder qualquer dúvida sobre a API do Quickshell (PanelWindow, PopupWindow, WlrLayershell, MPRIS, Pipewire, UPower, Hyprland IPC). Cobre a API 0.3.0 exata, os padrões de layer-shell, o design system wallust e as armadilhas específicas deste hardware.
+description: Criar, editar e depurar widgets Quickshell (QML/QtQuick layer-shell) neste rice NixOS+Hyprland. Use ao mexer em qualquer .qml de dotfiles/profiles/<name>/quickshell/ (a barra inteira do perfil nous, o widget de mídia do default), ao criar qualquer widget de desktop novo (mídia, volume, bateria, workspaces, notificações, tray, OSD, lock screen), ao migrar um módulo da waybar para Quickshell, ou ao responder qualquer dúvida sobre a API do Quickshell (PanelWindow, PopupWindow, WlrLayershell, MPRIS, Pipewire, UPower, Hyprland IPC). Cobre a API 0.3.0 exata, os padrões de layer-shell, o design system wallust e as armadilhas específicas deste hardware.
 ---
 
 # Quickshell — widgets para este rice
@@ -15,16 +15,24 @@ animações que a waybar estruturalmente não consegue fazer.
 > continuam valendo para o resto: `mcp__nixos__nix` para pacotes/opções, `waybar_read_section`
 > antes de mexer na barra, `theme_read_palette`/`theme_get_color` para ler a paleta atual,
 > `codebase-memory` para navegar código Python. Ao delegar a subagentes, repasse esta regra.
+>
+> **Skills vizinhas:** `design-system` (de onde vem `colors.json`), `theme-profiles` (por que o
+> Quickshell é morto e respawnado na troca de perfil), `hardware-quirks` (limites da GPU,
+> UPower), `nix-wiring` (o symlink e quando um `switch` é obrigatório).
 
 ## Como o Quickshell vive neste repo
 
 | | |
 |---|---|
-| Config | `dotfiles/quickshell/shell.qml` |
-| Symlink | `modules/home/quickshell.nix` → `~/.config/quickshell/` via `mkOutOfStoreSymlink` |
-| Start | `exec-once = quickshell` em `dotfiles/hypr/hyprland.conf` |
+| Config | `dotfiles/profiles/<name>/quickshell/shell.qml` (+ `ui/`) — **per-profile** |
+| Symlink | `modules/home/quickshell.nix` → `~/.config/quickshell/`, via `~/.config/theme/active/` e `mkOutOfStoreSymlink`. Symlinka `shell.qml` e `ui/` **individualmente**, nunca o diretório |
+| Start | `exec-once = quickshell` no `hypr/hyprland.conf` do perfil |
 | Paleta | `~/.config/quickshell/colors.json`, gerada por wallust |
 | Versão | 0.3.0 (nixpkgs) |
+
+Os dois perfis usam o Quickshell de formas diferentes: no `default` é **um widget de mídia** sob a
+waybar (`docs/media-widget.md`); no `nous` é a **barra inteira**, já modularizada em
+`ui/` com `Theme.qml`/`Sys.qml` como singletons (`docs/quickshell-bar-nous.md`).
 
 **Editar `.qml` tem efeito imediato** — o Quickshell observa o arquivo e recarrega sozinho.
 Não precisa de `home-manager switch`; só a mudança do wiring Nix precisa. O Quickshell
@@ -105,17 +113,18 @@ Métricas extraídas de `dotfiles/profiles/nous/waybar/style.css` **antes de ser
 - Durações: `animFast: 160`, `animNormal: 200` (perfil é "precise, technical", mais seco que o
   220/280 do `default`)
 
-### Arquitetura recomendada quando surgir o 2º widget
+### Arquitetura quando surgir o 2º widget num perfil
 
-Hoje o `shell.qml` é um arquivo só, com a paleta inline — o certo para um widget. Ao
-adicionar o segundo, extraia antes de duplicar:
+No `default` o `shell.qml` ainda é um arquivo só, com a paleta inline — o certo para um widget.
+Ao adicionar o segundo, extraia antes de duplicar (é exatamente o caminho que o `nous` já
+percorreu, e o resultado está em `dotfiles/profiles/nous/quickshell/ui/`):
 
 ```
-dotfiles/quickshell/
+dotfiles/profiles/<name>/quickshell/
   shell.qml              # só compõe os widgets
-  Theme.qml              # pragma Singleton: paleta + raios + fonte + durações
-  Widgets/Media.qml
-  Widgets/Volume.qml
+  ui/Theme.qml           # pragma Singleton: paleta + raios + fonte + durações
+  ui/Media.qml
+  ui/Volume.qml
 ```
 
 ```qml
