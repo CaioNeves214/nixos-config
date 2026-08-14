@@ -27,6 +27,7 @@
     ../modules/home/quickshell.nix
     ../modules/home/kitty.nix
     ../modules/home/theme.nix
+    ../modules/home/gtk.nix
     ../modules/home/rofi.nix
     ../modules/home/walker.nix
     ../modules/home/easyeffects.nix

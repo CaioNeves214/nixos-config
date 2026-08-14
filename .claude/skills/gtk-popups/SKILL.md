@@ -87,6 +87,29 @@ Duas regras:
 Um perfil pode sobrepor o estilo dos popups via `dotfiles/profiles/<name>/gtk/popups.css`. Detalhes
 do pipeline de cor: skill **`design-system`**.
 
+## Prioridade CSS: por que os dois scripts carregam em `PRIORITY_USER`, não `PRIORITY_APPLICATION`
+
+Desde que `modules/home/gtk.nix` passou a symlinkar um `~/.config/gtk-3.0/gtk.css` global (a
+camada GTK3 do design system — skill **`design-system`**), os dois popups precisam competir com
+ele. O GTK carrega esse `gtk.css` global em `GTK_STYLE_PROVIDER_PRIORITY_USER` (800), aplicado a
+**todo** app GTK3, popups incluídos.
+
+Se o CSS embutido dos scripts continuasse em `PRIORITY_APPLICATION` (600), o `gtk.css` global
+venceria por prioridade mais alta e repintaria os dois popups por cima — regressão silenciosa,
+sem erro. Por isso `volume-popup.py` e `wallpaper-picker.py` sobem o provider do CSS embutido
+para `PRIORITY_USER` também (mesma prioridade do overlay de perfil, que já usava `USER`).
+
+Isso não inverte a ordem interna que os dois scripts já dependiam: em **empate** de prioridade o
+GTK dá precedência ao provider adicionado **depois**. Ordem de entrada, todos em `USER`:
+
+1. `gtk.css` global — entra no `gtk_init`, antes de qualquer coisa do script.
+2. CSS embutido do popup — entra no `__init__` da janela.
+3. `dotfiles/profiles/<name>/gtk/popups.css` (overlay de perfil) — entra por último.
+
+Cada um vence o anterior por ter entrado depois, então o resultado visual dos popups **não muda**
+— só o `gtk.css` global passa a perder, que é o efeito desejado. Se um popup novo for escrito,
+replique isso: registre o provider do CSS embutido em `PRIORITY_USER`.
+
 ## Depurar
 
 - Rode pelo terminal primeiro; erro de typelib aparece como

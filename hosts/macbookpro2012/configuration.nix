@@ -22,6 +22,7 @@
       ../../modules/system/login.nix
       ../../modules/system/storage.nix
       ../../modules/system/power.nix
+      ../../modules/system/filemanager.nix
     ];
 
   # Bootloader.

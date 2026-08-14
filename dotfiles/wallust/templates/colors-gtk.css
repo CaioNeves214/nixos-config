@@ -1,0 +1,9 @@
+/* Gerado por wallust — NÃO editar (importado pelo gtk.css do perfil ativo). */
+/* Design tokens no formato @define-color do GTK3. */
+@define-color base      {{background}};
+@define-color text      {{foreground}};
+@define-color primary   {{color4}};
+@define-color secondary {{color2}};
+@define-color alert     {{color1}};
+@define-color warning   {{color3}};
+@define-color surface   {{color8}};

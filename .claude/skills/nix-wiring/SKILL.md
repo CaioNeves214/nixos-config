@@ -39,11 +39,16 @@ hosts/macbookpro2012/
   configuration.nix                # hardware, display, rede, portais XDG; importa modules/system/*
   hardware-configuration.nix       # gerado — NÃO editar à mão
 home/caio.nix                      # entry point do Home Manager; importa modules/home/*
-modules/system/                    # audio bluetooth boot fan locale login networking
+modules/system/                    # audio bluetooth boot fan filemanager locale login networking
                                    # packages power storage udev users zsh
-modules/home/                      # dev easyeffects git hyprland kitty packages quickshell
+modules/home/                      # dev easyeffects git gtk hyprland kitty packages quickshell
                                    # rofi theme walker waybar
 ```
+
+`filemanager.nix` liga `programs.thunar` (com plugins), `services.gvfs` (lixeira/montagem) e
+`services.tumbler` (miniaturas) — é o backend do Thunar; o cliente de home (`gtk.nix`) só cobre a
+camada visual GTK3. Ver skill **`design-system`** para o `colors-gtk.css` e skill
+**`theme-profiles`** para o `gtk/gtk.css` por perfil.
 
 Módulos de `modules/home/` que apontam para dotfiles seguem todos o mesmo formato: apontam para um
 caminho **constante** sob `~/.config/theme/active/` (skill **`theme-profiles`**).

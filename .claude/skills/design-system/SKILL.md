@@ -1,6 +1,6 @@
 ---
 name: design-system
-description: O sistema de cores único deste rice — wallust extrai a paleta do wallpaper e a distribui para todo app. Use para qualquer tarefa envolvendo cor, paleta, tema, wallpaper, tokens, wallust, update-theme, os templates em dotfiles/wallust/templates/, os arquivos colors.* gerados, ou ao restilizar visualmente qualquer app (hyprland, kitty, rofi, walker, waybar, quickshell, sddm). Use também antes de escrever qualquer hex literal num dotfile — a resposta quase sempre é "use um token".
+description: O sistema de cores único deste rice — wallust extrai a paleta do wallpaper e a distribui para todo app. Use para qualquer tarefa envolvendo cor, paleta, tema, wallpaper, tokens, wallust, update-theme, os templates em dotfiles/wallust/templates/, os arquivos colors.* gerados, ou ao restilizar visualmente qualquer app (hyprland, kitty, rofi, walker, waybar, quickshell, sddm, gtk3/thunar). Use também antes de escrever qualquer hex literal num dotfile — a resposta quase sempre é "use um token".
 ---
 
 # Design System — a fonte única de cor
@@ -51,8 +51,9 @@ Cinco tokens semânticos, iguais em todos os templates (nomes variam com a sinta
 | `secondary` | `{{color2}}` | acento secundário |
 | `alert` | `{{color1}}` | crítico, urgente, bateria baixa |
 
-O template do Quickshell tem **8** tokens: os 5 acima (com `background`/`foreground`/`text`) mais
-`warning` (`{{color3}}`) e `surface` (`{{color8}}`), adicionados para o perfil `nous`.
+O template do Quickshell e o do GTK3 (`colors-gtk.css`) têm **7** tokens: os 5 acima mais
+`warning` (`{{color3}}`) e `surface` (`{{color8}}`) — `surface` é a segunda superfície
+(sidebar/headerbar do Thunar) que `alpha()` sozinho não resolve.
 
 Hierarquia se faz com **alpha sobre os tokens**, não com cores novas.
 
@@ -69,6 +70,7 @@ devem ser editados à mão**. Edite o *template* no repo e rode `update-theme`.
 | `colors-rofi.rasi` | `rofi/colors.rasi` | `@import "/home/caio/.config/rofi/colors.rasi"` no `theme.rasi` |
 | `colors-walker.css` | `walker/colors.css` | `@import url("file:///home/caio/.config/walker/colors.css")` no `themes/walker.css` |
 | `colors-quickshell.json` | `quickshell/colors.json` | `FileView` com `watchChanges: true` |
+| `colors-gtk.css` | `gtk-3.0/colors.css` | `@import url("file:///home/caio/.config/gtk-3.0/colors.css")` no `gtk.css` do perfil |
 | `colors-sddm.conf` | `~/.cache/sddm-colors.conf` | copiado por `update-theme` para `/var/lib/sddm-theme/colors.conf` |
 | `waybar-config.jsonc` | `waybar/config.jsonc` | **o layout inteiro**, gerado (ver abaixo) |
 
@@ -102,6 +104,16 @@ lê `quickshell/colors.json` para a **barra inteira**, não só para um widget d
    symlink de diretório faria o wallust escrever `colors.json` dentro da working tree do repo
    (já aconteceu, e o arquivo acabou versionado no git). Ver skill **`quickshell`**.
 
+## GTK3 (Thunar + pavucontrol + gsimplecal + xarchiver): `@import` funciona, mas o tema base não obedece tokens
+
+`gtk-3.0/gtk.css` **consegue** `@import` normalmente (é CSS de verdade) — não é um dos quatro casos
+acima. A armadilha é outra: o tema `Adwaita-dark` do GTK3 (`modules/home/gtk.nix`) compila as
+próprias regras com **hex literal** e ignora `@define-color` sobrescrito pelo usuário. Os tokens só
+valem nas regras explícitas escritas em `dotfiles/profiles/<name>/gtk/gtk.css`; qualquer seletor
+não coberto ali cai de volta no hex do tema base. É por isso que existe uma folha de regras
+explícitas por perfil em vez de confiar só no `@define-color` global — e por isso o tema base
+escolhido é escuro (`Adwaita-dark`), para o que não foi coberto continuar coerente.
+
 ## Comandos
 
 Definidos em `modules/home/theme.nix` como `writeShellScriptBin`, então estão no `PATH`:
@@ -116,7 +128,8 @@ Definidos em `modules/home/theme.nix` como `writeShellScriptBin`, então estão 
 
 Os arquivos gerados (`colors.*`, `waybar/config.jsonc`) são gitignored e **não existem num
 checkout limpo** — rode `update-theme <wallpaper>` uma vez depois do primeiro
-`nixos-rebuild switch`, ou a waybar/as cores não estarão presentes.
+`nixos-rebuild switch`, ou a waybar/as cores (incluindo `gtk-3.0/colors.css`) não estarão
+presentes.
 
 ## Ler a paleta atual sem abrir arquivo
 

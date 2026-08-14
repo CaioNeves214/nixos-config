@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Ações customizadas do Thunar — compartilhado entre perfis (é comportamento,
+  não visual). Symlinkado por modules/home/gtk.nix.
+
+  NÃO editar pela GUI do Thunar: ela reescreve este arquivo inteiro por rename
+  atômico ao salvar qualquer ação, o que quebraria o symlink para o repo.
+  Edite este arquivo e recarregue o Thunar.
+-->
+<actions>
+    <action>
+        <icon>utilities-terminal</icon>
+        <name>Abrir terminal aqui</name>
+        <unique-id>nix-config-open-terminal-here</unique-id>
+        <command>kitty --directory %f</command>
+        <description>Abre o kitty no diretório atual</description>
+        <patterns>*</patterns>
+        <directories/>
+    </action>
+    <action>
+        <icon>com.visualstudio.code</icon>
+        <name>Abrir no VS Code</name>
+        <unique-id>nix-config-open-vscode</unique-id>
+        <command>code %f</command>
+        <description>Abre o item selecionado no VS Code</description>
+        <patterns>*</patterns>
+        <directories/>
+        <other-files/>
+    </action>
+    <action>
+        <icon>edit-copy</icon>
+        <name>Copiar caminho</name>
+        <unique-id>nix-config-copy-path</unique-id>
+        <command>sh -c 'printf %%s "%f" | wl-copy'</command>
+        <description>Copia o caminho absoluto para a área de transferência</description>
+        <patterns>*</patterns>
+        <directories/>
+        <audio-files/>
+        <image-files/>
+        <other-files/>
+        <text-files/>
+        <video-files/>
+    </action>
+    <action>
+        <icon>preferences-desktop-wallpaper</icon>
+        <name>Definir como wallpaper</name>
+        <unique-id>nix-config-set-wallpaper</unique-id>
+        <command>update-theme %f</command>
+        <description>Aplica a imagem como wallpaper e regenera a paleta do design system</description>
+        <patterns>*.png;*.jpg;*.jpeg;*.webp</patterns>
+        <image-files/>
+    </action>
+</actions>

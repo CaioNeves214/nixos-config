@@ -124,7 +124,8 @@ Detalhes do pipeline de cor (templates, tokens, quem consome o quê) estão na s
 ## Checklist para criar um perfil novo
 
 1. `dotfiles/profiles/<novo>/` com, no mínimo, `hypr/hyprland.conf`, `kitty/kitty.conf`,
-   `rofi/{config,theme}.rasi`, `walker/{config.toml,themes/walker.css}`, `gtk/popups.css`.
+   `rofi/{config,theme}.rasi`, `walker/{config.toml,themes/walker.css}`, `gtk/popups.css`,
+   `gtk/gtk.css` (camada GTK3 global — Thunar e demais apps GTK3; ver skill `design-system`).
 2. Decida se tem waybar. Se sim: `waybar/style.css` + `waybar/geometry.jsonc`. Se não: a barra
    tem que vir de `quickshell/`.
 3. Includes de cor com **caminho absoluto** (regra 1).

@@ -1,0 +1,225 @@
+/* GTK3 global do perfil "nous" — Thunar, pavucontrol, gsimplecal, xarchiver.
+ *
+ * Caminho absoluto obrigatório: este arquivo carrega de
+ * ~/.config/theme/active/gtk/gtk.css (symlink out-of-store), um @import
+ * relativo resolveria dentro do repo, não em ~/.config/. Ver skill theme-profiles.
+ *
+ * Seletores: só nomes de nó CSS do GTK3 documentados/estáveis (`treeview`,
+ * `toolbar`, `statusbar`, `.sidebar`, `entry`, `button`, `menu`,
+ * `scrollbar`) — NÃO ids específicos do Thunar. Uma primeira versão deste
+ * arquivo usava ids como `#standard-view`/`#shortcuts-pane`/
+ * `#location-button` "extraídos do binário"; checado com `strings` no
+ * binário real (thunar-4.20.3), NENHUM desses ids existe — o Thunar não
+ * assina esses widgets com gtk_widget_set_name(). Resultado prático: quase
+ * nenhuma regra batia, o texto não-selecionado caía no default do Adwaita
+ * (por isso ficava invisível) e o fundo do treeview, setado como
+ * `transparent`, mostrava o clear color por trás em vez de @base — daí não
+ * bater com o kitty. Corrigido usando só os seletores genéricos abaixo.
+ *
+ * Papéis: base = canvas, surface = sidebar/toolbar, primary = seleção e
+ * foco, alert = ações destrutivas. Texto não-selecionado usa
+ * `alpha(@text, 0.72)` — um branco apagado, no mesmo espírito acinzentado
+ * da sidebar (pedido explícito: legível, mas sem competir com o item em
+ * foco, que fica em @text cheio sobre @primary). Bordas usam
+ * `alpha(@text, 0.18)` — claras o bastante pra existir, sem ser branco
+ * puro (o branco que aparecia antes era o anel de foco padrão do Adwaita,
+ * nunca escrito por nós; zerado abaixo).
+ *
+ * `background-image: none` em todo estado de hover/seleção/foco: o Adwaita
+ * usa `background-image` (não `background-color`) pra pintar o realce de
+ * hover em botões flat, uma camada A MAIS que fica por cima da nossa
+ * `background-color` — as duas não colidem como propriedade, então
+ * compõem (nosso azul + o overlay translúcido do Adwaita), resultando numa
+ * cor diluída/errada em vez do @primary sólido pretendido. Zerar
+ * `background-image` garante que só a nossa cor conta.
+ *
+ * `label` tem regra própria: é o nó CSS de qualquer GtkLabel, então cobre
+ * texto dentro de diálogos e listas (`GtkListBox`/`row`) que não são
+ * `treeview` — ex.: "Configurar colunas...". Sem isso esses textos caem
+ * no default do Adwaita e podem colidir com o fundo, mesmo que `window`
+ * já tenha `color: @text` (herança só vale quando NENHUMA regra bate
+ * diretamente no elemento, e o Adwaita quase sempre tem uma regra própria
+ * para `label`).
+ */
+@import url("file:///home/caio/.config/gtk-3.0/colors.css");
+
+* {
+    outline-color: alpha(@primary, 0.5);
+}
+
+window,
+dialog,
+.background {
+    background-color: @base;
+    color: @text;
+    font-family: "IBM Plex Sans", "Symbols Nerd Font", sans-serif;
+}
+
+/* GtkNotebook (abas "Geral/Emblemas/Destacar/Permissões" das Propriedades):
+   node "notebook" pro cabeçalho de abas, "stack" pro conteúdo da página —
+   sem isso a página cai no fundo claro do Adwaita mesmo com `window` e
+   `.background` cobertos, porque é outro nó, filho, com pintura própria. */
+notebook,
+notebook > stack,
+notebook stack {
+    background-color: @base;
+    color: @text;
+    border-color: alpha(@text, 0.15);
+}
+
+/* A régua clara que separava as abas do conteúdo era border-color do
+   Adwaita (~#cdc7c2), não background/box-shadow — por isso sobrevivia ao
+   fix anterior. border-style/width continuam do Adwaita, só a cor muda. */
+notebook header {
+    background-color: @surface;
+    box-shadow: none;
+    border-color: alpha(@text, 0.15);
+}
+
+notebook header tabs tab {
+    border-color: alpha(@text, 0.15);
+}
+
+notebook tab:checked {
+    color: @primary;
+}
+
+label {
+    color: @text;
+}
+
+/* Estado desabilitado (ex.: coluna "Nome" no diálogo de colunas, que não
+   pode ser ocultada): dimmed explícito em vez de deixar o Adwaita decidir
+   — combinado com o alpha(@text,0.72) do treeview, o dimming dele por
+   cima quase zerava o contraste. */
+*:disabled,
+*:insensitive {
+    color: alpha(@text, 0.45);
+}
+
+/* GtkListBox (diálogos de lista/seleção que não são treeview). */
+list {
+    background-color: @base;
+    color: @text;
+}
+
+row {
+    color: @text;
+}
+
+/* Thunar usa GtkToolbar clássica (menu + barra de navegação/pathbar), não
+   GtkHeaderBar — por isso "toolbar", não "headerbar". */
+toolbar,
+statusbar {
+    background-color: @surface;
+    color: @text;
+    border: none;
+    box-shadow: none;
+    border-radius: 0;
+}
+
+/* .sidebar é a classe padrão do GTK3 para painéis laterais (GtkPlacesSidebar,
+   file chooser etc.); o Thunar aplica ela no ThunarShortcutsPane. */
+.sidebar {
+    background-color: @surface;
+    border-right: 1px solid alpha(@text, 0.12);
+}
+
+/* Painel de arquivos (a sidebar também é, por baixo, um treeview — herda
+   as mesmas regras, o que é o comportamento certo). Fundo EXPLÍCITO: sem
+   isso cai no fallback do Adwaita, que não bate com @base/kitty. */
+treeview {
+    background-color: @base;
+    color: alpha(@text, 0.72);
+    font-family: "IBM Plex Mono", monospace;
+}
+
+treeview:selected,
+treeview row:selected,
+row:selected {
+    background-color: @primary;
+    background-image: none;
+    color: @text;
+}
+
+treeview:hover:not(:selected) {
+    background-color: alpha(@primary, 0.12);
+    background-image: none;
+    color: @text;
+}
+
+/* Cabeçalho das colunas (Nome / Tamanho / Data de modificação). */
+treeview header button {
+    background-color: @surface;
+    color: @text;
+    border: none;
+    border-bottom: 1px solid alpha(@text, 0.12);
+    border-radius: 0;
+    box-shadow: none;
+}
+
+entry {
+    background-color: @base;
+    color: @text;
+    border: 1px solid alpha(@text, 0.18);
+    border-radius: 0;
+    padding: 4px 8px;
+    font-family: "IBM Plex Mono", monospace;
+    box-shadow: none;
+}
+
+entry:focus {
+    border-color: @primary;
+    box-shadow: none;
+}
+
+button {
+    border-radius: 0;
+    background-color: @surface;
+    background-image: none;
+    color: @text;
+    border: 1px solid alpha(@text, 0.18);
+    box-shadow: none;
+}
+
+button:hover {
+    background-color: @primary;
+    background-image: none;
+    color: @text;
+}
+
+button:focus {
+    border-color: @primary;
+    box-shadow: none;
+}
+
+button.destructive-action {
+    background-color: @alert;
+    color: @base;
+}
+
+menu {
+    background-color: @surface;
+    color: @text;
+    border-radius: 0;
+    border: 1px solid alpha(@text, 0.18);
+}
+
+menu menuitem:hover {
+    background-color: @primary;
+    background-image: none;
+    color: @text;
+}
+
+scrollbar {
+    background-color: transparent;
+}
+
+scrollbar slider {
+    background-color: alpha(@text, 0.25);
+    border-radius: 0;
+}
+
+scrollbar slider:hover {
+    background-color: @primary;
+}

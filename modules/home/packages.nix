@@ -137,7 +137,10 @@ in
     fd # Busca de arquivos/pastas usada pelo provider "finder" do walker
     hyprpaper # Wallpaper
     wallust # Gera paleta de cores a partir do wallpaper (design system)
-    xfce.thunar # File Explorer
+    # Thunar vem de modules/system/filemanager.nix (programs.thunar), já wrapped
+    # com os plugins — mantê-lo aqui também sombrearia o wrapped e os plugins
+    # sumiriam em silêncio.
+    xarchiver # Gerenciador de arquivos compactados (dá corpo ao thunar-archive-plugin)
     udiskie # Automount de pendrives/HDs externos ao conectar (tray icon + notificação)
     vscode # Editor de código (VSCode)
     mako # Notification daemon

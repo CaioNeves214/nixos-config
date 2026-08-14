@@ -25,6 +25,11 @@ waybar = { template = 'colors-waybar.css', target = '~/.config/waybar/colors.css
 rofi  = { template = 'colors-rofi.rasi',  target = '~/.config/rofi/colors.rasi' }
 walker = { template = 'colors-walker.css', target = '~/.config/walker/colors.css' }
 
+# Camada GTK3 (Thunar + pavucontrol + gsimplecal + xarchiver): CSS de usuário
+# do GTK é global (não existe arquivo por app), então este include vale para
+# todo app GTK3 do rice.
+gtk = { template = 'colors-gtk.css', target = '~/.config/gtk-3.0/colors.css' }
+
 # Tela de login (SDDM). O greeter roda como o usuário 'sddm' e não lê ~/.config,
 # então o update-theme copia este arquivo para /var/lib/sddm-theme/colors.conf
 # (diretório criado por modules/system/login.nix).

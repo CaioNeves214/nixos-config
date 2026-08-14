@@ -176,8 +176,14 @@ class VolumePopup(Gtk.Window):
 
         provider = Gtk.CssProvider()
         provider.load_from_data(build_css())
+        # PRIORITY_USER (não APPLICATION): ~/.config/gtk-3.0/gtk.css (camada
+        # GTK global do design system) também carrega em USER, no gtk_init —
+        # antes deste provider. Em empate de prioridade o GTK dá precedência
+        # ao provider adicionado depois, então isto continua vencendo o
+        # global sem inverter a ordem interna do popup (embutido < overlay
+        # de perfil, logo abaixo).
         Gtk.StyleContext.add_provider_for_screen(
-            screen, provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
+            screen, provider, Gtk.STYLE_PROVIDER_PRIORITY_USER
         )
         apply_profile_overlay(screen)
 

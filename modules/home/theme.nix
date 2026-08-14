@@ -44,6 +44,12 @@ let
     fi
     pkill -SIGUSR1 kitty  2>/dev/null || true
 
+    # GTK3 só monitora o gtk.css, não o colors.css que ele @importa — apps GTK
+    # abertos não pegam a paleta nova sozinhos. Mata só o daemon de fundo do
+    # Thunar (reativado por D-Bus na próxima abertura, já com a paleta nova);
+    # janelas abertas do usuário não são fechadas, pegam a cor ao reabrir.
+    pkill -f 'thunar --daemon' 2>/dev/null || true
+
     # O Quickshell observa o inode resolvido do shell.qml; trocar para onde o
     # symlink 'active' aponta não emite evento de inotify, então ele não
     # recarrega sozinho numa troca de perfil — precisa reiniciar de fato.

@@ -102,15 +102,16 @@ flake.nix                     # inputs + nixosConfigurations (host único)
 hosts/macbookpro2012/         # configuration.nix + hardware-configuration.nix (gerado)
 home/caio.nix                 # entry point do Home Manager
 modules/
-  system/                     # audio bluetooth boot fan locale login networking
+  system/                     # audio bluetooth boot fan filemanager locale login networking
                               # packages power storage udev users zsh
-  home/                       # dev easyeffects git hyprland kitty packages quickshell
+  home/                       # dev easyeffects git gtk hyprland kitty packages quickshell
                               # rofi theme walker waybar
 dotfiles/
   profiles/<name>/            # PER-PROFILE: um look completo cada (default, nous) + DESIGN.md
   wallust/                    # compartilhado: wallust.toml + templates de cor
   sddm/theme/                 # compartilhado: tema QML do login
   scripts/, waybar/scripts/   # compartilhado: popups GTK3 e helpers Python
+  thunar/                     # compartilhado: uca.xml + semente xfconf (comportamento, não visual)
   wallpapers/                 # compartilhado
 mcp_server/                   # server MCP nix-ricing (Python)
 docs/                         # documentos longos referenciados pelas skills
@@ -119,6 +120,11 @@ docs/                         # documentos longos referenciados pelas skills
 
 Tudo sob `dotfiles/profiles/<name>/` é **per-profile**; todo o resto de `dotfiles/` é
 **compartilhado por todos os perfis**.
+
+O wiring do Thunar fica do lado **system** (`modules/system/filemanager.nix`:
+`programs.thunar`, `services.gvfs`, `services.tumbler`), não em `modules/home/packages.nix` —
+é o mesmo padrão backend/cliente descrito na skill `nix-wiring`. A camada visual GTK3
+(`modules/home/gtk.nix`) é home e vale para todo app GTK3 do rice, não só o Thunar.
 
 ## Comandos essenciais
 

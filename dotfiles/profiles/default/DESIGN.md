@@ -83,6 +83,15 @@ placas da waybar), itens com raio 6px e seleção em `alpha(@primary, 0.18)`. Fo
 JetBrainsMono Nerd Font, igual ao resto do perfil. Cores vêm de
 `walker/colors.css` (novo template wallust `colors-walker.css`, mesmos 5 tokens).
 
+## Camada GTK3 (Thunar, pavucontrol, gsimplecal, xarchiver)
+
+`gtk/gtk.css` importa `~/.config/gtk-3.0/colors.css` (caminho absoluto — regra 1 da skill
+`theme-profiles`) e estende os 7 tokens do `colors-gtk.css` sobre `Adwaita-dark`. Mesma escala de
+raio do resto do perfil: 8px em surfaces/menus/botões, 6px nas linhas da sidebar do Thunar. Fonte
+`JetBrainsMono Nerd Font` no `treeview` (nomes de arquivo), igual ao terminal e à waybar. Papéis:
+`surface` para sidebar/headerbar/pathbar, `primary` para seleção e foco, `alert` só em
+`button.destructive-action`. Detalhes do pipeline: skill **`design-system`**.
+
 ## Verrugas conhecidas
 
 - **Bateria usa cores literais de CSS** (`lightgreen`, `gold`, `lightcoral`, `lime`) em
@@ -96,4 +105,5 @@ JetBrainsMono Nerd Font, igual ao resto do perfil. Cores vêm de
 
 - **Tela de login (SDDM)**: segue a cor (template `colors-sddm.conf`), não a fonte — ela é
   assada no `/nix/store` e o greeter não sabe qual perfil está ativo no boot.
-- **Apps GTK** (thunar, nm-connection-editor): não seguem o tema.
+- **`nm-connection-editor`**: não é GTK3 puro/não tem CSS de app coberto — não segue o tema.
+  Thunar/pavucontrol/gsimplecal/xarchiver seguem via `gtk/gtk.css` (ver seção acima).

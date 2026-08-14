@@ -110,13 +110,22 @@ Rodar `theme-profile default` de novo resolve. Não investigado a fundo (é um q
 é comparar com `uwsm app --` ou checar se há contenção de systemd-oomd/cgroup no momento do
 dispatch.
 
+### Camada GTK3 (Thunar, pavucontrol, gsimplecal, xarchiver)
+
+`gtk/gtk.css` importa `~/.config/gtk-3.0/colors.css` (caminho absoluto) e zera raio em tudo —
+`border-radius: 0`, o mesmo gesto central do resto do perfil — sobre `Adwaita-dark`. Seleção e
+foco usam `primary` sólido (texto vira `base`, sem alpha: é a mesma marcação de contraste sólido
+do `theme.rasi` deste perfil, não borda/sombra). Fonte `IBM Plex Sans` na UI, `IBM Plex Mono` no
+`treeview` (nomes de arquivo) e nos campos de busca — números/nomes não "pulam" de largura, igual
+ao resto do perfil. Detalhes do pipeline: skill **`design-system`**.
+
 ### Onde o perfil NÃO chega
 
 - **Tela de login (SDDM)**: segue a *cor* (o template `colors-sddm.conf` é renderizado pelo
   `wallust cs`), mas **não a fonte** — ela é assada no `/nix/store` e o greeter não sabe qual
   perfil está ativo no boot.
-- **Apps GTK** (thunar, nm-connection-editor): não seguem o tema. Gap pré-existente do rice,
-  não é regressão deste perfil.
+- **`nm-connection-editor`**: não segue o tema (gap pré-existente do rice). Thunar/pavucontrol/
+  gsimplecal/xarchiver seguem via `gtk/gtk.css` (ver seção acima).
 
 ---
 
